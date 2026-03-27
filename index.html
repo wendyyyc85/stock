@@ -40,9 +40,10 @@ header{display:flex;align-items:center;justify-content:space-between;margin-bott
 .setup-steps{font-size:12px;color:var(--mu);line-height:2;margin-bottom:12px;}
 .setup-steps a{color:var(--bl);}
 .setup-steps code{background:var(--sf2);padding:1px 5px;border-radius:4px;font-family:var(--mn);color:var(--yw);}
-.url-row{display:flex;gap:8px;flex-wrap:wrap;}
-.url-input{flex:1;min-width:0;background:var(--sf2);border:1px solid var(--bd2);border-radius:var(--rs);color:var(--tx);padding:9px 12px;font-size:13px;font-family:var(--mn);outline:none;}
+.url-row{display:flex;flex-direction:column;gap:8px;}
+.url-input{width:100%;background:var(--sf2);border:1px solid var(--bd2);border-radius:var(--rs);color:var(--tx);padding:9px 12px;font-size:13px;font-family:var(--mn);outline:none;}
 .url-input:focus{border-color:var(--gr);}
+.url-btns{display:flex;gap:8px;}
 .setup-ok{font-size:12px;color:var(--gr);margin-top:8px;}
 
 .fx-bar{display:grid;grid-template-columns:1fr 1fr 1fr;background:var(--sf);border:1px solid var(--bd);border-radius:var(--rs);margin-bottom:14px;overflow:hidden;font-family:var(--mn);}
@@ -200,8 +201,10 @@ td{padding:11px 13px;vertical-align:middle;}
   </div>
   <div class="url-row">
     <input class="url-input" id="gasUrlInput" type="url" placeholder="https://script.google.com/macros/s/.../exec">
-    <button class="btn btn-primary" onclick="saveGasUrl()">連線</button>
-    <button class="btn" id="clearBtn" onclick="clearGasUrl()" style="display:none">清除</button>
+    <div class="url-btns">
+      <button class="btn btn-primary" style="flex:1" onclick="saveGasUrl()">儲存連線</button>
+      <button class="btn" id="clearBtn" onclick="clearGasUrl()" style="display:none">清除</button>
+    </div>
   </div>
   <div class="setup-ok" id="setupOk" style="display:none">✅ 已連線，報價自動透過 Google Finance 抓取</div>
 </div>
@@ -548,7 +551,6 @@ function closeModal(id){
   setTimeout(()=>{if(!el.classList.contains('open'))el.style.display='';},220);
 }
 document.querySelectorAll('.overlay').forEach(o=>{
-  o.style.display='';
   o.addEventListener('click',e=>{if(e.target===o)closeModal(o.id);});
 });
 
