@@ -1,0 +1,635 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>StockLens</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Sora:wght@300;400;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0d0f14;--sf:#13161e;--sf2:#1a1e2a;
+  --bd:rgba(255,255,255,0.07);--bd2:rgba(255,255,255,0.13);
+  --tx:#e8eaf0;--mu:#6b7280;--mu2:#9ca3af;
+  --gr:#6ee7b7;--gr2:#34d399;--rd:#f87171;--bl:#60a5fa;--yw:#fbbf24;--pu:#a78bfa;
+  --mn:'DM Mono',monospace;--sn:'Sora',sans-serif;
+  --r:14px;--rs:8px;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+body{background:var(--bg);color:var(--tx);font-family:var(--sn);min-height:100vh;font-size:14px;line-height:1.6;overflow-x:hidden;}
+body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(110,231,183,0.025) 1px,transparent 1px),linear-gradient(90deg,rgba(110,231,183,0.025) 1px,transparent 1px);background-size:40px 40px;pointer-events:none;z-index:0;}
+.app{position:relative;z-index:1;max-width:1120px;margin:0 auto;padding:18px 14px 110px;}
+
+header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;}
+.logo{display:flex;align-items:center;gap:9px;}
+.logo-mark{width:34px;height:34px;min-width:34px;border-radius:9px;background:linear-gradient(135deg,var(--gr),#3b82f6);display:flex;align-items:center;justify-content:center;font-size:17px;}
+.logo-text{font-size:16px;font-weight:700;letter-spacing:-.5px;}
+.logo-sub{font-size:10px;color:var(--mu);font-family:var(--mn);margin-top:1px;display:none;}
+@media(min-width:480px){.logo-sub{display:block;}}
+.header-right{display:flex;gap:8px;}
+
+.btn{padding:9px 14px;border-radius:var(--rs);border:1px solid var(--bd2);background:var(--sf2);color:var(--tx);cursor:pointer;font-family:var(--sn);font-size:13px;font-weight:600;transition:all .15s;display:inline-flex;align-items:center;gap:6px;min-height:40px;white-space:nowrap;}
+.btn:active{opacity:.75;}
+.btn:disabled{opacity:.5;cursor:not-allowed;}
+.btn-primary{background:var(--gr);color:#0d0f14;border-color:var(--gr);font-weight:700;}
+.btn-primary:active{background:var(--gr2);}
+@media(hover:hover){.btn:hover{border-color:var(--gr);color:var(--gr);}.btn-primary:hover{background:var(--gr2);color:#0d0f14;}}
+
+.setup-banner{background:var(--sf);border:1px solid rgba(251,191,36,.3);border-radius:var(--r);padding:14px 16px;margin-bottom:14px;}
+.setup-banner.done{border-color:rgba(110,231,183,.3);}
+.setup-title{font-weight:700;font-size:13px;margin-bottom:4px;}
+.setup-steps{font-size:12px;color:var(--mu);line-height:2;margin-bottom:12px;}
+.setup-steps a{color:var(--bl);}
+.setup-steps code{background:var(--sf2);padding:1px 5px;border-radius:4px;font-family:var(--mn);color:var(--yw);}
+.url-row{display:flex;gap:8px;flex-wrap:wrap;}
+.url-input{flex:1;min-width:0;background:var(--sf2);border:1px solid var(--bd2);border-radius:var(--rs);color:var(--tx);padding:9px 12px;font-size:13px;font-family:var(--mn);outline:none;}
+.url-input:focus{border-color:var(--gr);}
+.setup-ok{font-size:12px;color:var(--gr);margin-top:8px;}
+
+.fx-bar{display:grid;grid-template-columns:1fr 1fr 1fr;background:var(--sf);border:1px solid var(--bd);border-radius:var(--rs);margin-bottom:14px;overflow:hidden;font-family:var(--mn);}
+.fx-item{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:9px 6px;border-right:1px solid var(--bd);}
+.fx-item:last-child{border-right:none;}
+.fx-lbl{font-size:9px;color:var(--mu);text-transform:uppercase;letter-spacing:.05em;margin-bottom:2px;}
+.fx-val{font-size:13px;font-weight:500;}
+.fx-st{display:flex;align-items:center;gap:4px;font-size:10px;color:var(--mu);}
+.dot{display:inline-block;width:7px;height:7px;border-radius:50%;}
+.dot-ok{background:var(--gr);}.dot-warn{background:var(--yw);}
+.dot-spin{width:9px;height:9px;border:1.5px solid var(--bd2);border-top-color:var(--gr);border-radius:50%;animation:spin .8s linear infinite;display:inline-block;}
+@keyframes spin{to{transform:rotate(360deg);}}
+
+.sg{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:16px;}
+@media(min-width:640px){.sg{grid-template-columns:repeat(4,1fr);}}
+.card{background:var(--sf);border:1px solid var(--bd);border-radius:var(--r);padding:13px 14px;position:relative;overflow:hidden;}
+.card::after{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--ct,var(--bd)),transparent);}
+.card.green{--ct:rgba(110,231,183,.4);}.card.red{--ct:rgba(248,113,113,.4);}.card.blue{--ct:rgba(96,165,250,.4);}.card.purple{--ct:rgba(167,139,250,.4);}
+.cl{font-size:10px;color:var(--mu);font-family:var(--mn);text-transform:uppercase;letter-spacing:.07em;margin-bottom:5px;}
+.cv{font-size:17px;font-weight:700;font-family:var(--mn);letter-spacing:-1px;}
+@media(min-width:640px){.cv{font-size:21px;}}
+.cs{font-size:10px;color:var(--mu);margin-top:3px;font-family:var(--mn);}
+.pos{color:var(--gr);}.neg{color:var(--rd);}
+
+.sec-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;gap:8px;}
+.sec-tt{font-size:11px;font-weight:600;color:var(--mu);font-family:var(--mn);text-transform:uppercase;letter-spacing:.08em;}
+.tabs{display:flex;gap:3px;background:var(--sf);border-radius:var(--rs);padding:3px;border:1px solid var(--bd);}
+.tab{padding:5px 10px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600;color:var(--mu);transition:all .15s;}
+.tab.active{background:var(--sf2);color:var(--tx);border:1px solid var(--bd2);}
+
+/* Mobile card layout */
+.hcards{display:flex;flex-direction:column;gap:9px;margin-bottom:18px;}
+.hcard{background:var(--sf);border:1px solid var(--bd);border-radius:var(--r);padding:13px 14px;}
+.hcard-head{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px;}
+.hcard-lft{display:flex;align-items:center;gap:8px;}
+.badge{font-size:9px;font-family:var(--mn);font-weight:500;padding:2px 6px;border-radius:4px;text-transform:uppercase;letter-spacing:.06em;}
+.badge-TW{background:rgba(110,231,183,.12);color:var(--gr);border:1px solid rgba(110,231,183,.2);}
+.badge-US{background:rgba(96,165,250,.15);color:var(--bl);border:1px solid rgba(96,165,250,.2);}
+.badge-JP{background:rgba(251,191,36,.12);color:var(--yw);border:1px solid rgba(251,191,36,.2);}
+.hcard-sym{font-weight:700;font-family:var(--mn);font-size:15px;}
+.hcard-nm{font-size:11px;color:var(--mu);margin-top:1px;}
+.hcard-rgt{text-align:right;}
+.hcard-pv{font-family:var(--mn);font-weight:600;font-size:14px;}
+.hcard-pl{font-size:10px;color:var(--mu);font-family:var(--mn);margin-top:2px;}
+.hcard-body{display:grid;grid-template-columns:1fr 1fr 1fr;gap:4px;padding:9px 0;border-top:1px solid var(--bd);border-bottom:1px solid var(--bd);margin-bottom:10px;}
+.hstat{display:flex;flex-direction:column;gap:2px;}
+.hstat-l{font-size:10px;color:var(--mu);font-family:var(--mn);}
+.hstat-v{font-size:12px;font-family:var(--mn);font-weight:500;}
+.hpnl{display:flex;flex-direction:column;align-items:flex-end;}
+.hpnl-t{font-size:13px;font-weight:700;font-family:var(--mn);}
+.hpnl-p{font-size:11px;font-family:var(--mn);}
+.hcard-acts{display:flex;gap:7px;}
+.ab{flex:1;background:none;border:1px solid var(--bd2);border-radius:6px;color:var(--mu2);cursor:pointer;padding:8px 0;font-size:12px;font-family:var(--mn);text-align:center;transition:all .12s;}
+.ab:active{opacity:.7;}
+@media(hover:hover){.ab.edit:hover{border-color:var(--bl);color:var(--bl);}.ab.sell:hover{border-color:var(--gr);color:var(--gr);}.ab.del:hover{border-color:var(--rd);color:var(--rd);}}
+
+/* Desktop table */
+.htable-wrap{display:none;}
+@media(min-width:768px){
+  .hcards{display:none;}
+  .htable-wrap{display:block;background:var(--sf);border:1px solid var(--bd);border-radius:var(--r);overflow:hidden;margin-bottom:18px;}
+}
+table{width:100%;border-collapse:collapse;}
+th{text-align:left;padding:10px 13px;font-size:11px;font-family:var(--mn);color:var(--mu);text-transform:uppercase;letter-spacing:.08em;border-bottom:1px solid var(--bd);font-weight:500;}
+th.r,td.r{text-align:right;}
+tbody tr{border-bottom:1px solid var(--bd);transition:background .1s;}
+tbody tr:hover{background:var(--sf2);}
+tbody tr:last-child{border-bottom:none;}
+td{padding:11px 13px;vertical-align:middle;}
+.sc{display:flex;align-items:center;gap:9px;}
+.sym{font-weight:700;font-family:var(--mn);}
+.sym-nm{font-size:11px;color:var(--mu);margin-top:1px;}
+.mn{font-family:var(--mn);}
+.pw{display:flex;flex-direction:column;align-items:flex-end;}
+.pct{font-size:11px;margin-top:1px;}
+.tab-ab{background:none;border:1px solid var(--bd);border-radius:6px;color:var(--mu);cursor:pointer;padding:4px 9px;font-size:11px;font-family:var(--mn);transition:all .15s;}
+.tab-ab.edit:hover{border-color:var(--bl);color:var(--bl);}
+.tab-ab.sell:hover{border-color:var(--gr);color:var(--gr);}
+.tab-ab.del:hover{border-color:var(--rd);color:var(--rd);}
+
+.empty{text-align:center;padding:48px 20px;color:var(--mu);font-size:13px;line-height:2.4;}
+.p-loading{color:var(--mu);font-size:12px;font-style:italic;font-family:var(--mn);}
+.p-err{color:var(--rd);font-size:12px;font-family:var(--mn);}
+
+.rsec{margin-bottom:18px;}
+.rtbl-wrap{background:var(--sf);border:1px solid var(--bd);border-radius:var(--r);overflow-x:auto;}
+.rtbl{width:100%;border-collapse:collapse;font-size:12px;}
+.rtbl th{text-align:left;padding:8px 11px;font-size:10px;font-family:var(--mn);color:var(--mu);text-transform:uppercase;letter-spacing:.06em;border-bottom:1px solid var(--bd);}
+.rtbl th.r,.rtbl td.r{text-align:right;}
+.rtbl td{padding:9px 11px;border-bottom:1px solid var(--bd);font-family:var(--mn);}
+.rtbl tr:last-child td{border-bottom:none;}
+.tag{display:inline-block;font-size:10px;font-family:var(--mn);padding:2px 7px;border-radius:20px;font-weight:500;}
+.tag-sell{background:rgba(248,113,113,.1);color:var(--rd);border:1px solid rgba(248,113,113,.2);}
+
+/* Modal — bottom sheet on mobile, centered on desktop */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.72);backdrop-filter:blur(4px);z-index:200;display:none;align-items:flex-end;justify-content:center;opacity:0;pointer-events:none;transition:opacity .2s;}
+@media(min-width:600px){.overlay{align-items:center;}}
+.overlay.open{opacity:1;pointer-events:all;}
+.modal{background:var(--sf);border:1px solid var(--bd2);width:100%;max-width:480px;padding:20px 18px 36px;transform:translateY(40px);transition:transform .25s cubic-bezier(.32,.72,0,1);border-radius:20px 20px 0 0;max-height:92vh;overflow-y:auto;-webkit-overflow-scrolling:touch;}
+@media(min-width:600px){.modal{border-radius:18px;padding:26px;transform:translateY(20px);max-height:88vh;}}
+.overlay.open .modal{transform:translateY(0);}
+.modal-drag{width:40px;height:4px;background:var(--bd2);border-radius:2px;margin:0 auto 16px;display:block;}
+@media(min-width:600px){.modal-drag{display:none;}}
+.modal-title{font-size:17px;font-weight:700;margin-bottom:4px;}
+.modal-sub{font-size:12px;color:var(--mu);margin-bottom:18px;}
+.frow{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;}
+.frow.full{grid-template-columns:1fr;}
+.fg{display:flex;flex-direction:column;gap:5px;}
+.fg label{font-size:11px;color:var(--mu);font-family:var(--mn);text-transform:uppercase;letter-spacing:.06em;}
+.fg input,.fg select{background:var(--sf2);border:1px solid var(--bd2);border-radius:var(--rs);color:var(--tx);padding:10px 12px;font-size:15px;font-family:var(--mn);outline:none;transition:border-color .15s;width:100%;-webkit-appearance:none;}
+.fg input:focus,.fg select:focus{border-color:var(--gr);}
+.fg select option{background:var(--sf2);}
+.modal-actions{display:flex;gap:9px;justify-content:flex-end;margin-top:16px;}
+.err{color:var(--rd);font-size:12px;margin-top:6px;display:none;}
+.si{background:var(--sf2);border-radius:var(--rs);padding:12px 13px;margin-bottom:14px;font-family:var(--mn);font-size:12px;}
+.sr{display:flex;justify-content:space-between;padding:3px 0;}
+.sr span:first-child{color:var(--mu);}
+.divider{border:none;border-top:1px solid var(--bd);margin:13px 0;}
+.edit-warn{background:rgba(251,191,36,.08);border:1px solid rgba(251,191,36,.2);border-radius:var(--rs);padding:9px 12px;font-size:12px;color:var(--yw);margin-bottom:13px;line-height:1.6;}
+
+/* FAB */
+.fab{position:fixed;bottom:22px;right:16px;z-index:100;width:54px;height:54px;border-radius:50%;background:var(--gr);color:#0d0f14;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:26px;box-shadow:0 4px 18px rgba(110,231,183,.35);transition:transform .15s;}
+.fab:active{transform:scale(.91);}
+@media(min-width:600px){.fab{display:none;}}
+.add-desktop{display:none;}
+@media(min-width:600px){.add-desktop{display:inline-flex;}}
+
+@keyframes rotating{to{transform:rotate(360deg);}}
+.spin-icon{display:inline-block;animation:rotating 1s linear infinite;}
+</style>
+</head>
+<body>
+<div class="app">
+
+<header>
+  <div class="logo">
+    <div class="logo-mark">📈</div>
+    <div>
+      <div class="logo-text">StockLens</div>
+      <div class="logo-sub">美股 · 台股 · 日股</div>
+    </div>
+  </div>
+  <div class="header-right">
+    <button class="btn" id="rfBtn" onclick="refreshAll()">⟳ 更新</button>
+    <button class="btn btn-primary add-desktop" onclick="openAdd()">＋ 新增持股</button>
+  </div>
+</header>
+
+<div class="setup-banner" id="setupBanner">
+  <div class="setup-title">🚀 設定 Google Apps Script 後端</div>
+  <div class="setup-steps">
+    1. 前往 <a href="https://script.google.com" target="_blank">script.google.com</a> 新增專案，貼入 <code>Code.gs</code><br>
+    2. 部署 → 網頁應用程式 → 執行身份：我，存取：所有人<br>
+    3. 複製部署網址貼到下方
+  </div>
+  <div class="url-row">
+    <input class="url-input" id="gasUrlInput" type="url" placeholder="https://script.google.com/macros/s/.../exec">
+    <button class="btn btn-primary" onclick="saveGasUrl()">連線</button>
+    <button class="btn" id="clearBtn" onclick="clearGasUrl()" style="display:none">清除</button>
+  </div>
+  <div class="setup-ok" id="setupOk" style="display:none">✅ 已連線，報價自動透過 Google Finance 抓取</div>
+</div>
+
+<div class="fx-bar">
+  <div class="fx-item"><div class="fx-lbl">USD/TWD</div><div class="fx-val" id="fx-usd">－</div></div>
+  <div class="fx-item"><div class="fx-lbl">JPY/TWD</div><div class="fx-val" id="fx-jpy">－</div></div>
+  <div class="fx-item"><div class="fx-lbl">匯率</div><div class="fx-st"><span id="fx-dot" class="dot-spin"></span><span id="fx-time">載入中</span></div></div>
+</div>
+
+<div class="sg">
+  <div class="card green"><div class="cl">總資產（台幣）</div><div class="cv" id="s-tv">NT$ 0</div><div class="cs" id="s-tc">0 檔持股</div></div>
+  <div class="card" id="s-pc"><div class="cl">未實現損益</div><div class="cv" id="s-pnl">NT$ 0</div><div class="cs" id="s-pp">0.00%</div></div>
+  <div class="card blue"><div class="cl">已實現損益</div><div class="cv" id="s-rl">NT$ 0</div><div class="cs">累計出場損益</div></div>
+  <div class="card purple"><div class="cl">總投入成本</div><div class="cv" id="s-ct">NT$ 0</div><div class="cs" id="s-cs">加權平均成本</div></div>
+</div>
+
+<div class="sec-hd">
+  <div class="sec-tt">持股明細</div>
+  <div class="tabs">
+    <div class="tab active" onclick="setTab('all',this)">全部</div>
+    <div class="tab" onclick="setTab('TW',this)">🇹🇼</div>
+    <div class="tab" onclick="setTab('US',this)">🇺🇸</div>
+    <div class="tab" onclick="setTab('JP',this)">🇯🇵</div>
+  </div>
+</div>
+
+<div class="hcards" id="hcards"></div>
+<div class="htable-wrap" id="htable-wrap">
+  <table>
+    <thead><tr><th>股票</th><th class="r">現價</th><th class="r">持股</th><th class="r">均價成本</th><th class="r">現值（台幣）</th><th class="r">未實現損益</th><th></th></tr></thead>
+    <tbody id="hbody"></tbody>
+  </table>
+</div>
+
+<div class="rsec" id="real-sec" style="display:none">
+  <div class="sec-hd" style="margin-bottom:10px"><div class="sec-tt">已實現交易紀錄</div></div>
+  <div class="rtbl-wrap">
+    <table class="rtbl">
+      <thead><tr><th>股票</th><th>類型</th><th class="r">股數</th><th class="r">成交價</th><th class="r">損益（台幣）</th><th class="r">日期</th></tr></thead>
+      <tbody id="rbody"></tbody>
+    </table>
+  </div>
+</div>
+
+</div>
+
+<button class="fab" onclick="openAdd()">＋</button>
+
+<!-- Add Modal -->
+<div class="overlay" id="addModal">
+<div class="modal">
+  <span class="modal-drag"></span>
+  <div class="modal-title">新增持股</div>
+  <div class="modal-sub">記錄買入資訊，自動計算台幣損益</div>
+  <div class="frow">
+    <div class="fg"><label>市場</label>
+      <select id="f-mkt" onchange="onMktChange()">
+        <option value="TW">🇹🇼 台股</option>
+        <option value="US">🇺🇸 美股</option>
+        <option value="JP">🇯🇵 日股</option>
+      </select>
+    </div>
+    <div class="fg"><label>代號</label><input id="f-sym" placeholder="如：2330" oninput="this.value=this.value.toUpperCase()"></div>
+  </div>
+  <div class="frow full"><div class="fg"><label>公司名稱（選填）</label><input id="f-nm" placeholder="留空自動抓取"></div></div>
+  <div class="frow">
+    <div class="fg"><label>買入股數</label><input id="f-sh" type="number" inputmode="decimal" step="any" placeholder="0"></div>
+    <div class="fg"><label>買入單價 (<span id="f-cur">TWD</span>)</label><input id="f-pr" type="number" inputmode="decimal" step="any" placeholder="0.00"></div>
+  </div>
+  <div class="frow">
+    <div class="fg"><label>買入日期</label><input id="f-dt" type="date"></div>
+    <div class="fg"><label>匯率（留空自動）</label><input id="f-fx" type="number" inputmode="decimal" step="any" placeholder="自動抓取"></div>
+  </div>
+  <div id="add-err" class="err"></div>
+  <div class="modal-actions">
+    <button class="btn" onclick="closeModal('addModal')">取消</button>
+    <button class="btn btn-primary" onclick="addHolding()">確認買入</button>
+  </div>
+</div>
+</div>
+
+<!-- Sell Modal -->
+<div class="overlay" id="sellModal">
+<div class="modal">
+  <span class="modal-drag"></span>
+  <div class="modal-title">記錄賣出</div>
+  <div class="modal-sub" id="sell-sub"></div>
+  <div class="si" id="sell-info"></div>
+  <div class="frow">
+    <div class="fg"><label>賣出股數</label><input id="s-sh" type="number" inputmode="decimal" step="any" placeholder="0"></div>
+    <div class="fg"><label>賣出單價 (<span id="s-cur">TWD</span>)</label><input id="s-pr" type="number" inputmode="decimal" step="any" placeholder="0.00"></div>
+  </div>
+  <div class="frow">
+    <div class="fg"><label>賣出日期</label><input id="s-dt" type="date"></div>
+    <div class="fg"><label>匯率（留空自動）</label><input id="s-fx" type="number" inputmode="decimal" step="any" placeholder="自動抓取"></div>
+  </div>
+  <div id="sell-err" class="err"></div>
+  <div class="modal-actions">
+    <button class="btn" onclick="closeModal('sellModal')">取消</button>
+    <button class="btn btn-primary" onclick="confirmSell()">確認賣出</button>
+  </div>
+</div>
+</div>
+
+<!-- Edit Modal -->
+<div class="overlay" id="editModal">
+<div class="modal">
+  <span class="modal-drag"></span>
+  <div class="modal-title">編輯持股</div>
+  <div class="modal-sub" id="edit-sub"></div>
+  <div class="edit-warn">⚠️ 此操作直接覆蓋資料。追加買入請用「新增持股」以保留損益紀錄。</div>
+  <div class="frow full"><div class="fg"><label>公司名稱</label><input id="e-nm"></div></div>
+  <hr class="divider">
+  <div class="frow">
+    <div class="fg"><label>持有股數</label><input id="e-sh" type="number" inputmode="decimal" step="any"></div>
+    <div class="fg"><label>買入均價 (<span id="e-cur">TWD</span>)</label><input id="e-pr" type="number" inputmode="decimal" step="any"></div>
+  </div>
+  <div class="frow">
+    <div class="fg"><label>買入日期</label><input id="e-dt" type="date"></div>
+    <div class="fg"><label>匯率</label><input id="e-fx" type="number" inputmode="decimal" step="any" placeholder="留空自動換算"></div>
+  </div>
+  <div id="edit-err" class="err"></div>
+  <div class="modal-actions">
+    <button class="btn" onclick="closeModal('editModal')">取消</button>
+    <button class="btn btn-primary" onclick="confirmEdit()">儲存變更</button>
+  </div>
+</div>
+</div>
+
+<script>
+const CUR={TW:'TWD',US:'USD',JP:'JPY'};
+const ST={holdings:[],realized:[],fx:{USD_TWD:null,JPY_TWD:null},prices:{},tab:'all',sellId:null,editId:null,gasUrl:''};
+
+function save(){try{localStorage.setItem('sl6_h',JSON.stringify(ST.holdings));localStorage.setItem('sl6_r',JSON.stringify(ST.realized));}catch(e){}}
+function load(){
+  try{
+    // 讀取當前版本資料
+    let h=localStorage.getItem('sl6_h');
+    let r=localStorage.getItem('sl6_r');
+    // 若無資料，嘗試從舊版遷移
+    if(!h) h=localStorage.getItem('sl5_h');
+    if(!r) r=localStorage.getItem('sl5_r');
+    ST.holdings=JSON.parse(h||'[]');
+    ST.realized=JSON.parse(r||'[]');
+    ST.gasUrl=localStorage.getItem('sl6_gas')||localStorage.getItem('sl5_gas')||'';
+    // 確保每筆持股都有 id
+    ST.holdings.forEach((h,i)=>{if(!h.id)h.id=String(Date.now()+i);});
+  }catch(e){ST.holdings=[];ST.realized=[];}}
+
+function saveGasUrl(){
+  const url=document.getElementById('gasUrlInput').value.trim();
+  if(!url.includes('script.google.com/macros/s/')){alert('請貼入正確的 GAS 部署網址');return;}
+  ST.gasUrl=url;localStorage.setItem('sl6_gas',url);updateBanner();refreshAll();
+}
+function clearGasUrl(){ST.gasUrl='';localStorage.removeItem('sl6_gas');document.getElementById('gasUrlInput').value='';document.getElementById('gasUrlInput').disabled=false;updateBanner();renderAll();}
+function updateBanner(){
+  const ok=!!ST.gasUrl;
+  document.getElementById('setupBanner').className='setup-banner'+(ok?' done':'');
+  document.getElementById('setupOk').style.display=ok?'block':'none';
+  document.getElementById('clearBtn').style.display=ok?'':'none';
+  const inp=document.getElementById('gasUrlInput');
+  if(ok){inp.value=ST.gasUrl.slice(0,52)+'...';inp.disabled=true;}
+  else{inp.value='';inp.disabled=false;}
+}
+
+async function gasCall(params){
+  if(!ST.gasUrl)return null;
+  const form=new FormData();
+  Object.entries(params).forEach(([k,v])=>form.append(k,v));
+  const r=await fetch(ST.gasUrl,{method:'POST',body:form,signal:AbortSignal.timeout(35000)});
+  return r.json();
+}
+
+async function fetchFX(){
+  if(!ST.gasUrl){
+    try{const d=await(await fetch('https://api.frankfurter.app/latest?from=USD&to=TWD,JPY')).json();ST.fx.USD_TWD=d.rates.TWD;ST.fx.JPY_TWD=d.rates.TWD/d.rates.JPY;setFXBar(false);}
+    catch(e){ST.fx.USD_TWD=32.5;ST.fx.JPY_TWD=0.217;setFXBar(true);}
+    return;
+  }
+  try{
+    const d=await gasCall({action:'fx'});
+    if(d?.USD_TWD){ST.fx.USD_TWD=d.USD_TWD;ST.fx.JPY_TWD=d.JPY_TWD;setFXBar(false);}
+    else{ST.fx.USD_TWD=32.5;ST.fx.JPY_TWD=0.217;setFXBar(true);}
+  }catch(e){ST.fx.USD_TWD=32.5;ST.fx.JPY_TWD=0.217;setFXBar(true);}
+}
+function setFXBar(fb){
+  document.getElementById('fx-usd').textContent=ST.fx.USD_TWD?.toFixed(2)||'－';
+  document.getElementById('fx-jpy').textContent=ST.fx.JPY_TWD?.toFixed(4)||'－';
+  const dot=document.getElementById('fx-dot');dot.className='dot '+(fb?'dot-warn':'dot-ok');dot.textContent='';
+  document.getElementById('fx-time').textContent=fb?'備用':'已更新';
+}
+function toTWD(p,m){return m==='TW'?p:m==='US'?p*(ST.fx.USD_TWD||32.5):p*(ST.fx.JPY_TWD||0.217);}
+
+async function fetchQuotes(){
+  if(!ST.gasUrl||!ST.holdings.length)return;
+  ST.holdings.forEach(h=>{ST.prices[h.symbol+'|'+h.market]={status:'loading'};});
+  renderHoldings();
+  try{
+    const d=await gasCall({action:'quotes',symbols:ST.holdings.map(h=>h.symbol+'|'+h.market).join(',')});
+    if(d?.quotes){
+      d.quotes.forEach(q=>{
+        const h=ST.holdings.find(x=>x.symbol===q.symbol&&x.market===q.market);
+        const key=q.symbol+'|'+q.market;
+        if(q.ok&&q.price!=null){ST.prices[key]={price:q.price,name:q.name,status:'ok'};if(h&&!h.name&&q.name)h.name=q.name;}
+        else ST.prices[key]={status:'error'};
+      });
+    }else ST.holdings.forEach(h=>{ST.prices[h.symbol+'|'+h.market]={status:'error'};});
+  }catch(e){ST.holdings.forEach(h=>{ST.prices[h.symbol+'|'+h.market]={status:'error'};});}
+  save();renderAll();
+}
+
+async function refreshAll(){
+  const btn=document.getElementById('rfBtn');
+  btn.innerHTML='<span class="spin-icon">⟳</span>';btn.disabled=true;
+  await fetchFX();await fetchQuotes();renderAll();
+  btn.innerHTML='⟳ 更新';btn.disabled=false;
+}
+
+function fmt(n,d=0){if(n==null||isNaN(n))return'－';return n.toLocaleString('zh-TW',{minimumFractionDigits:d,maximumFractionDigits:d});}
+function fmtNT(n){if(n==null||isNaN(n))return'－';return(n>=0?'NT$ ':'-NT$ ')+fmt(Math.abs(n));}
+function cls(n){return n>0?'pos':n<0?'neg':'';}
+function renderAll(){renderSummary();renderHoldings();renderRealized();}
+
+function renderSummary(){
+  let tv=0,tc=0,has=false;
+  ST.holdings.forEach(h=>{const p=ST.prices[h.symbol+'|'+h.market];if(p?.price!=null){tv+=toTWD(p.price,h.market)*h.shares;has=true;}tc+=h.costTWD;});
+  const pnl=has?tv-tc:null,pct=tc>0&&pnl!=null?(pnl/tc*100):null;
+  const rt=ST.realized.reduce((s,r)=>s+(r.pnlTWD||0),0);
+  document.getElementById('s-tv').textContent=has?fmtNT(tv):'NT$ –';
+  document.getElementById('s-tc').textContent=ST.holdings.length+' 檔持股';
+  document.getElementById('s-pnl').textContent=pnl!=null?fmtNT(pnl):'NT$ –';
+  document.getElementById('s-pnl').className='cv '+(pnl!=null?cls(pnl):'');
+  document.getElementById('s-pp').textContent=pct!=null?(pct>=0?'+':'')+pct.toFixed(2)+'%':'–';
+  document.getElementById('s-pc').className='card '+(pnl==null?'':pnl>=0?'green':'red');
+  document.getElementById('s-rl').textContent=fmtNT(rt);
+  document.getElementById('s-rl').className='cv '+cls(rt);
+  document.getElementById('s-ct').textContent=fmtNT(tc);
+  document.getElementById('s-cs').textContent=pct!=null?`平均報酬 ${pct>=0?'+':''}${pct.toFixed(2)}%`:'尚無報價';
+}
+
+function list(){return ST.tab==='all'?ST.holdings:ST.holdings.filter(h=>h.market===ST.tab);}
+
+function getPriceDisplay(h){
+  const key=h.symbol+'|'+h.market,p=ST.prices[key],cur=CUR[h.market];
+  if(!ST.gasUrl)return{html:`<span style="color:var(--mu);font-size:12px">請設定 GAS</span>`,price:null};
+  if(!p||p.status==='loading')return{html:`<span class="p-loading">查詢中...</span>`,price:null};
+  if(p.status==='error')return{html:`<span class="p-err">查無資料</span>`,price:null};
+  return{html:`<span class="mn">${cur} ${fmt(p.price,2)}</span>`,price:p.price};
+}
+
+function renderHoldings(){
+  const l=list();
+  // Mobile cards
+  const cards=document.getElementById('hcards');
+  if(!l.length){
+    cards.innerHTML=`<div class="empty">📊<br>尚無持股<br><span style="font-size:12px">點右下角 ＋ 開始追蹤</span></div>`;
+    document.getElementById('hbody').innerHTML=`<tr><td colspan="7"><div class="empty">📊<br>尚無持股</div></td></tr>`;
+    return;
+  }
+  cards.innerHTML=l.map(h=>{
+    const {html:ph,price:cp}=getPriceDisplay(h),cur=CUR[h.market];
+    const vt=cp!=null?toTWD(cp,h.market)*h.shares:null;
+    const pl=vt!=null?vt-h.costTWD:null,pp=h.costTWD>0&&pl!=null?(pl/h.costTWD*100):null;
+    const dn=ST.prices[h.symbol+'|'+h.market]?.name||h.name||'';
+    const sh=h.shares%1===0?fmt(h.shares):fmt(h.shares,3);
+    return `<div class="hcard">
+      <div class="hcard-head">
+        <div class="hcard-lft">
+          <span class="badge badge-${h.market}">${h.market}</span>
+          <div><div class="hcard-sym">${h.symbol}</div><div class="hcard-nm">${dn}</div></div>
+        </div>
+        <div class="hcard-rgt"><div class="hcard-pv">${ph}</div><div class="hcard-pl">現價</div></div>
+      </div>
+      <div class="hcard-body">
+        <div class="hstat"><div class="hstat-l">持股</div><div class="hstat-v">${sh}</div></div>
+        <div class="hstat"><div class="hstat-l">均價</div><div class="hstat-v">${cur} ${fmt(h.avgPrice,2)}</div></div>
+        <div class="hstat hpnl">
+          <div class="hstat-l" style="text-align:right">未實現損益</div>
+          <div class="hpnl-t ${cls(pl)}">${pl!=null?fmtNT(pl):'－'}</div>
+          <div class="hpnl-p ${cls(pp)}">${pp!=null?(pp>=0?'+':'')+pp.toFixed(2)+'%':''}</div>
+        </div>
+      </div>
+      <div class="hcard-acts">
+        <button class="ab edit" onclick="openEdit('${h.id}')">編輯</button>
+        <button class="ab sell" onclick="openSell('${h.id}')">賣出</button>
+        <button class="ab del" onclick="del('${h.id}')">刪除</button>
+      </div>
+    </div>`;
+  }).join('');
+  // Desktop table
+  document.getElementById('hbody').innerHTML=l.map(h=>{
+    const {html:ph,price:cp}=getPriceDisplay(h),cur=CUR[h.market];
+    const vt=cp!=null?toTWD(cp,h.market)*h.shares:null;
+    const pl=vt!=null?vt-h.costTWD:null,pp=h.costTWD>0&&pl!=null?(pl/h.costTWD*100):null;
+    const dn=ST.prices[h.symbol+'|'+h.market]?.name||h.name||'';
+    const sh=h.shares%1===0?fmt(h.shares):fmt(h.shares,3);
+    return `<tr>
+      <td><div class="sc"><span class="badge badge-${h.market}">${h.market}</span><div><div class="sym">${h.symbol}</div><div class="sym-nm">${dn}</div></div></div></td>
+      <td class="r">${ph}</td><td class="r mn">${sh}</td>
+      <td class="r mn">${cur} ${fmt(h.avgPrice,2)}</td>
+      <td class="r mn">${vt!=null?fmtNT(vt):'－'}</td>
+      <td class="r"><div class="pw"><span class="mn ${cls(pl)}">${pl!=null?fmtNT(pl):'－'}</span><span class="pct ${cls(pp)}">${pp!=null?(pp>=0?'+':'')+pp.toFixed(2)+'%':''}</span></div></td>
+      <td><div style="display:flex;gap:6px">
+        <button class="tab-ab edit" onclick="openEdit('${h.id}')">編輯</button>
+        <button class="tab-ab sell" onclick="openSell('${h.id}')">賣出</button>
+        <button class="tab-ab del" onclick="del('${h.id}')">刪除</button>
+      </div></td>
+    </tr>`;
+  }).join('');
+}
+
+function renderRealized(){
+  const sec=document.getElementById('real-sec');
+  if(!ST.realized.length){sec.style.display='none';return;}
+  sec.style.display='';
+  document.getElementById('rbody').innerHTML=ST.realized.slice().reverse().map(r=>`
+    <tr>
+      <td><span class="mn">${r.symbol}</span> <span style="font-size:10px;color:var(--mu)">${r.market}</span></td>
+      <td><span class="tag tag-sell">賣出</span></td>
+      <td class="r mn">${fmt(r.shares,3)}</td>
+      <td class="r mn">${CUR[r.market]} ${fmt(r.price,2)}</td>
+      <td class="r mn ${cls(r.pnlTWD)}">${fmtNT(r.pnlTWD)}</td>
+      <td class="r mn" style="color:var(--mu);font-size:11px">${r.date||''}</td>
+    </tr>`).join('');
+}
+
+function setTab(t,el){ST.tab=t;document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));el.classList.add('active');renderHoldings();}
+
+function openModal(id){
+  const el=document.getElementById(id);
+  if(!el)return;
+  el.style.display='flex';
+  // force reflow then add class for transition
+  el.getBoundingClientRect();
+  el.classList.add('open');
+  document.body.style.overflow='hidden';
+}
+function closeModal(id){
+  const el=document.getElementById(id);
+  if(!el)return;
+  el.classList.remove('open');
+  document.body.style.overflow='';
+  setTimeout(()=>{if(!el.classList.contains('open'))el.style.display='';},220);
+}
+document.querySelectorAll('.overlay').forEach(o=>{
+  o.style.display='';
+  o.addEventListener('click',e=>{if(e.target===o)closeModal(o.id);});
+});
+
+const MKT_PH={TW:'2330',US:'AAPL',JP:'7203'};
+function onMktChange(){const m=document.getElementById('f-mkt').value;document.getElementById('f-cur').textContent=CUR[m];document.getElementById('f-sym').placeholder='如：'+MKT_PH[m];}
+function openAdd(){
+  ['f-sym','f-nm','f-sh','f-pr','f-fx'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('f-mkt').value='TW';
+  document.getElementById('f-dt').value=new Date().toISOString().slice(0,10);
+  document.getElementById('add-err').style.display='none';
+  onMktChange();openModal('addModal');
+}
+function addHolding(){
+  const mkt=document.getElementById('f-mkt').value,sym=document.getElementById('f-sym').value.trim().toUpperCase(),nm=document.getElementById('f-nm').value.trim();
+  const sh=parseFloat(document.getElementById('f-sh').value),pr=parseFloat(document.getElementById('f-pr').value),dt=document.getElementById('f-dt').value;
+  const fxr=parseFloat(document.getElementById('f-fx').value),err=document.getElementById('add-err');
+  if(!sym||isNaN(sh)||sh<=0||isNaN(pr)||pr<=0){err.textContent='請填寫代號、股數與買入價格';err.style.display='block';return;}
+  const fx=(!isNaN(fxr)&&fxr>0)?fxr:(mkt==='US'?(ST.fx.USD_TWD||32.5):mkt==='JP'?(ST.fx.JPY_TWD||0.217):1);
+  const ex=ST.holdings.find(h=>h.symbol===sym&&h.market===mkt);
+  if(ex){const nt=ex.shares+sh;ex.costTWD+=toTWD(pr,mkt)*sh;ex.avgPrice=(ex.avgPrice*ex.shares+pr*sh)/nt;ex.shares=nt;ex.name=nm||ex.name;}
+  else ST.holdings.push({id:Date.now().toString(),market:mkt,symbol:sym,name:nm,shares:sh,avgPrice:pr,costTWD:toTWD(pr,mkt)*sh,buyFx:fx,date:dt});
+  save();closeModal('addModal');renderAll();
+  if(ST.gasUrl)fetchQuotes();
+}
+function openSell(id){
+  const h=ST.holdings.find(x=>x.id===id);if(!h)return;
+  ST.sellId=id;
+  const cur=CUR[h.market],p=ST.prices[h.symbol+'|'+h.market];
+  document.getElementById('sell-sub').textContent=`賣出 ${h.symbol}（${h.market}）`;
+  document.getElementById('s-cur').textContent=cur;
+  ['s-sh','s-fx'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('s-pr').value=p?.price?p.price.toFixed(2):'';
+  document.getElementById('s-dt').value=new Date().toISOString().slice(0,10);
+  document.getElementById('sell-err').style.display='none';
+  document.getElementById('sell-info').innerHTML=`
+    <div class="sr"><span>持有股數</span><span>${fmt(h.shares,3)} 股</span></div>
+    <div class="sr"><span>買入均價</span><span>${cur} ${fmt(h.avgPrice,2)}</span></div>
+    <div class="sr"><span>成本（台幣）</span><span>${fmtNT(h.costTWD)}</span></div>
+    ${p?.price?`<div class="sr"><span>現價</span><span>${cur} ${fmt(p.price,2)}</span></div>`:''}`;
+  openModal('sellModal');
+}
+function confirmSell(){
+  const h=ST.holdings.find(x=>x.id===ST.sellId);if(!h)return;
+  const sh=parseFloat(document.getElementById('s-sh').value),pr=parseFloat(document.getElementById('s-pr').value),dt=document.getElementById('s-dt').value;
+  const err=document.getElementById('sell-err');
+  if(isNaN(sh)||sh<=0||sh>h.shares){err.textContent='賣出股數有誤';err.style.display='block';return;}
+  if(isNaN(pr)||pr<=0){err.textContent='請填寫賣出價格';err.style.display='block';return;}
+  const cp=(h.costTWD/h.shares)*sh,pnlTWD=toTWD(pr,h.market)*sh-cp;
+  ST.realized.push({symbol:h.symbol,market:h.market,shares:sh,price:pr,date:dt,pnlTWD});
+  if(sh>=h.shares)ST.holdings=ST.holdings.filter(x=>x.id!==h.id);
+  else{h.shares-=sh;h.costTWD-=cp;}
+  save();closeModal('sellModal');renderAll();
+}
+function openEdit(id){
+  const h=ST.holdings.find(x=>x.id===id);if(!h)return;
+  ST.editId=id;
+  document.getElementById('edit-sub').textContent=`編輯 ${h.symbol}（${h.market}）`;
+  document.getElementById('e-cur').textContent=CUR[h.market];
+  document.getElementById('e-nm').value=h.name||'';
+  document.getElementById('e-sh').value=h.shares;
+  document.getElementById('e-pr').value=h.avgPrice;
+  document.getElementById('e-dt').value=h.date||new Date().toISOString().slice(0,10);
+  document.getElementById('e-fx').value=h.buyFx&&h.market!=='TW'?h.buyFx:'';
+  document.getElementById('edit-err').style.display='none';
+  openModal('editModal');
+}
+function confirmEdit(){
+  const h=ST.holdings.find(x=>x.id===ST.editId);if(!h)return;
+  const nm=document.getElementById('e-nm').value.trim();
+  const sh=parseFloat(document.getElementById('e-sh').value),pr=parseFloat(document.getElementById('e-pr').value),dt=document.getElementById('e-dt').value;
+  const fxr=parseFloat(document.getElementById('e-fx').value),err=document.getElementById('edit-err');
+  if(isNaN(sh)||sh<=0){err.textContent='請輸入有效的股數';err.style.display='block';return;}
+  if(isNaN(pr)||pr<=0){err.textContent='請輸入有效的均價';err.style.display='block';return;}
+  const fx=(!isNaN(fxr)&&fxr>0)?fxr:(h.market==='US'?(ST.fx.USD_TWD||32.5):h.market==='JP'?(ST.fx.JPY_TWD||0.217):1);
+  h.name=nm||h.name;h.shares=sh;h.avgPrice=pr;h.date=dt;h.buyFx=fx;h.costTWD=toTWD(pr,h.market)*sh;
+  save();closeModal('editModal');renderAll();
+}
+function del(id){if(!confirm('確定刪除這筆持股？'))return;ST.holdings=ST.holdings.filter(h=>h.id!==id);save();renderAll();}
+
+load();updateBanner();renderAll();
+fetchFX().then(()=>{if(ST.gasUrl&&ST.holdings.length)fetchQuotes();});
+</script>
+</body>
+</html>
