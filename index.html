@@ -192,7 +192,7 @@ td{padding:11px 13px;vertical-align:middle;}
   </div>
 </header>
 
-<div class="setup-banner" id="setupBanner">
+<div class="setup-banner" id="setupBanner" style="display:none">
   <div class="setup-title">🚀 設定 Google Apps Script 後端</div>
   <div class="setup-steps">
     1. 前往 <a href="https://script.google.com" target="_blank">script.google.com</a> 新增專案，貼入 <code>Code.gs</code><br>
@@ -337,7 +337,8 @@ td{padding:11px 13px;vertical-align:middle;}
 
 <script>
 const CUR={TW:'TWD',US:'USD',JP:'JPY'};
-const ST={holdings:[],realized:[],fx:{USD_TWD:null,JPY_TWD:null},prices:{},tab:'all',sellId:null,editId:null,gasUrl:''};
+const GAS_URL='https://script.google.com/macros/s/AKfycbzOaMMGGJBg4PZgI1HfByjLlea9Lv_6szcWwbu5Jx6Xnan2BSKPdjbhaJe8KzYA6ar7hw/exec';
+const ST={holdings:[],realized:[],fx:{USD_TWD:null,JPY_TWD:null},prices:{},tab:'all',sellId:null,editId:null,gasUrl:GAS_URL};
 
 function save(){try{localStorage.setItem('sl6_h',JSON.stringify(ST.holdings));localStorage.setItem('sl6_r',JSON.stringify(ST.realized));}catch(e){}}
 function load(){
@@ -350,7 +351,7 @@ function load(){
     if(!r) r=localStorage.getItem('sl5_r');
     ST.holdings=JSON.parse(h||'[]');
     ST.realized=JSON.parse(r||'[]');
-    ST.gasUrl=localStorage.getItem('sl6_gas')||localStorage.getItem('sl5_gas')||'';
+    ST.gasUrl=localStorage.getItem('sl6_gas')||localStorage.getItem('sl5_gas')||GAS_URL;
     // 確保每筆持股都有 id
     ST.holdings.forEach((h,i)=>{if(!h.id)h.id=String(Date.now()+i);});
   }catch(e){ST.holdings=[];ST.realized=[];}}
