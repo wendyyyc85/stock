@@ -188,6 +188,7 @@ td{padding:11px 13px;vertical-align:middle;}
   </div>
   <div class="header-right">
     <button class="btn" id="rfBtn" onclick="refreshAll()">⟳ 更新</button>
+    <button class="btn add-desktop" onclick="recalcCosts()" title="重新計算所有持股的台幣成本">⟳ 修正成本</button>
     <button class="btn btn-primary add-desktop" onclick="openAdd()">＋ 新增持股</button>
   </div>
 </header>
@@ -338,7 +339,7 @@ td{padding:11px 13px;vertical-align:middle;}
 <script>
 const CUR={TW:'TWD',US:'USD',JP:'JPY'};
 const GAS_URL='https://script.google.com/macros/s/AKfycbzOaMMGGJBg4PZgI1HfByjLlea9Lv_6szcWwbu5Jx6Xnan2BSKPdjbhaJe8KzYA6ar7hw/exec';
-const ST={holdings:[],realized:[],fx:{USD_TWD:null,JPY_TWD:null},prices:{},tab:'all',sellId:null,editId:null,gasUrl:GAS_URL};
+const ST={holdings:[],realized:[],fx:{USD_TWD:null,JPY_TWD:null},prices:{},tab:'all',sellId:null,editId:null,gasUrl:GAS_URL,fxReady:false};
 
 function save(){try{localStorage.setItem('sl6_h',JSON.stringify(ST.holdings));localStorage.setItem('sl6_r',JSON.stringify(ST.realized));}catch(e){}}
 function load(){
@@ -372,12 +373,25 @@ function updateBanner(){
   else{inp.value='';inp.disabled=false;}
 }
 
-async function gasCall(params){
+async function gasCall(params, retries=2){
   if(!ST.gasUrl)return null;
-  const form=new FormData();
-  Object.entries(params).forEach(([k,v])=>form.append(k,v));
-  const r=await fetch(ST.gasUrl,{method:'POST',body:form,signal:AbortSignal.timeout(35000)});
-  return r.json();
+  for(let i=0;i<retries;i++){
+    try{
+      const form=new FormData();
+      Object.entries(params).forEach(([k,v])=>form.append(k,v));
+      const r=await fetch(ST.gasUrl,{method:'POST',body:form,signal:AbortSignal.timeout(40000)});
+      const data=await r.json();
+      // 確認回傳資料有效才回傳，否則重試
+      if(data && !data.error) return data;
+      console.warn('GAS retry',i+1,'error:',data?.error);
+    }catch(e){
+      console.warn('GAS retry',i+1,'exception:',e.message);
+      if(i===retries-1) throw e;
+    }
+    // 等一秒再重試
+    await new Promise(r=>setTimeout(r,1000));
+  }
+  return null;
 }
 
 async function fetchFX(){
@@ -388,9 +402,16 @@ async function fetchFX(){
   }
   try{
     const d=await gasCall({action:'fx'});
-    if(d?.USD_TWD){ST.fx.USD_TWD=d.USD_TWD;ST.fx.JPY_TWD=d.JPY_TWD;setFXBar(false);}
-    else{ST.fx.USD_TWD=32.5;ST.fx.JPY_TWD=0.217;setFXBar(true);}
-  }catch(e){ST.fx.USD_TWD=32.5;ST.fx.JPY_TWD=0.217;setFXBar(true);}
+    if(d?.USD_TWD){
+      ST.fx.USD_TWD=d.USD_TWD;
+      ST.fx.JPY_TWD=d.JPY_TWD;
+      setFXBar(false);
+      ST.fxReady=true;
+    }else{
+      ST.fx.USD_TWD=32.5;ST.fx.JPY_TWD=0.217;setFXBar(true);
+      ST.fxReady=false;
+    }
+  }catch(e){ST.fx.USD_TWD=32.5;ST.fx.JPY_TWD=0.217;setFXBar(true);ST.fxReady=false;}
 }
 function setFXBar(fb){
   document.getElementById('fx-usd').textContent=ST.fx.USD_TWD?.toFixed(2)||'－';
@@ -398,7 +419,12 @@ function setFXBar(fb){
   const dot=document.getElementById('fx-dot');dot.className='dot '+(fb?'dot-warn':'dot-ok');dot.textContent='';
   document.getElementById('fx-time').textContent=fb?'備用':'已更新';
 }
-function toTWD(p,m){return m==='TW'?p:m==='US'?p*(ST.fx.USD_TWD||32.5):p*(ST.fx.JPY_TWD||0.217);}
+function toTWD(p,m){
+  if(m==='TW') return p;
+  if(m==='US') return p*(ST.fx.USD_TWD||32.5);
+  if(m==='JP') return p*(ST.fx.JPY_TWD||0.217);
+  return p;
+}
 
 async function fetchQuotes(){
   if(!ST.gasUrl||!ST.holdings.length)return;
@@ -410,11 +436,36 @@ async function fetchQuotes(){
       d.quotes.forEach(q=>{
         const h=ST.holdings.find(x=>x.symbol===q.symbol&&x.market===q.market);
         const key=q.symbol+'|'+q.market;
-        if(q.ok&&q.price!=null){ST.prices[key]={price:q.price,name:q.name,status:'ok'};if(h&&!h.name&&q.name)h.name=q.name;}
-        else ST.prices[key]={status:'error'};
+        if(q.ok&&q.price!=null){
+          ST.prices[key]={price:q.price,name:q.name,status:'ok'};
+          if(h&&!h.name&&q.name)h.name=q.name;
+        }else{
+          ST.prices[key]={status:'error'};
+        }
       });
-    }else ST.holdings.forEach(h=>{ST.prices[h.symbol+'|'+h.market]={status:'error'};});
-  }catch(e){ST.holdings.forEach(h=>{ST.prices[h.symbol+'|'+h.market]={status:'error'};});}
+      // 檢查有沒有失敗的，自動重試一次
+      const failed=ST.holdings.filter(h=>ST.prices[h.symbol+'|'+h.market]?.status==='error');
+      if(failed.length>0){
+        console.log('Retrying failed stocks:',failed.map(h=>h.symbol).join(','));
+        await new Promise(r=>setTimeout(r,2000));
+        const d2=await gasCall({action:'quotes',symbols:failed.map(h=>h.symbol+'|'+h.market).join(',')},1);
+        if(d2?.quotes){
+          d2.quotes.forEach(q=>{
+            const h=failed.find(x=>x.symbol===q.symbol&&x.market===q.market);
+            const key=q.symbol+'|'+q.market;
+            if(q.ok&&q.price!=null){
+              ST.prices[key]={price:q.price,name:q.name,status:'ok'};
+              if(h&&!h.name&&q.name)h.name=q.name;
+            }
+          });
+        }
+      }
+    }else{
+      ST.holdings.forEach(h=>{ST.prices[h.symbol+'|'+h.market]={status:'error'};});
+    }
+  }catch(e){
+    ST.holdings.forEach(h=>{ST.prices[h.symbol+'|'+h.market]={status:'error'};});
+  }
   save();renderAll();
 }
 
@@ -431,6 +482,17 @@ function cls(n){return n>0?'pos':n<0?'neg':'';}
 function renderAll(){renderSummary();renderHoldings();renderRealized();}
 
 function renderSummary(){
+  // 匯率未就緒時不計算損益，避免用錯誤匯率
+  if(!ST.fxReady&&ST.holdings.some(h=>h.market!=='TW')){
+    document.getElementById('s-tv').textContent='NT$ –';
+    document.getElementById('s-pnl').textContent='等待匯率...';
+    document.getElementById('s-pnl').className='cv';
+    document.getElementById('s-pp').textContent='–';
+    document.getElementById('s-ct').textContent='NT$ –';
+    document.getElementById('s-cs').textContent='–';
+    document.getElementById('s-tc').textContent=ST.holdings.length+' 檔持股';
+    return;
+  }
   let tv=0,tc=0,has=false;
   ST.holdings.forEach(h=>{const p=ST.prices[h.symbol+'|'+h.market];if(p?.price!=null){tv+=toTWD(p.price,h.market)*h.shares;has=true;}tc+=h.costTWD;});
   const pnl=has?tv-tc:null,pct=tc>0&&pnl!=null?(pnl/tc*100):null;
@@ -631,8 +693,46 @@ function confirmEdit(){
 }
 function del(id){if(!confirm('確定刪除這筆持股？'))return;ST.holdings=ST.holdings.filter(h=>h.id!==id);save();renderAll();}
 
+// 重新計算所有持股的台幣成本（用現在匯率）
+function recalcCosts() {
+  if(!ST.holdings.length){alert('尚無持股');return;}
+  const usd = ST.fx.USD_TWD || 32.5;
+  const jpy = ST.fx.JPY_TWD || 0.217;
+  ST.holdings.forEach(h => {
+    const fx = h.market==='US' ? usd : h.market==='JP' ? jpy : 1;
+    const oldCost = h.costTWD;
+    h.costTWD = h.avgPrice * h.shares * fx;
+    h.buyFx = fx;
+    console.log(h.symbol, 'costTWD:', oldCost, '->', h.costTWD);
+  });
+  save();
+  renderAll();
+  alert('成本已重新計算完成！');
+}
+
 load();updateBanner();renderAll();
-fetchFX().then(()=>{if(ST.gasUrl&&ST.holdings.length)fetchQuotes();});
+fetchFX().then(()=>{
+  // 匯率載入後重新計算所有美股/日股的 costTWD，確保損益正確
+  if(ST.fxReady){
+    let changed=false;
+    ST.holdings.forEach(h=>{
+      if(h.market==='TW') return;
+      const fx=h.market==='US'?ST.fx.USD_TWD:ST.fx.JPY_TWD;
+      // 只有在 costTWD 明顯異常時才重算（避免覆蓋用戶自訂）
+      const expectedCost=h.avgPrice*h.shares*fx;
+      const ratio=h.costTWD/expectedCost;
+      if(ratio<0.5||ratio>2){
+        console.log('Auto-fixing costTWD for',h.symbol,h.costTWD,'->',expectedCost);
+        h.costTWD=expectedCost;
+        h.buyFx=fx;
+        changed=true;
+      }
+    });
+    if(changed)save();
+  }
+  if(ST.gasUrl&&ST.holdings.length)fetchQuotes();
+  else renderAll();
+});
 </script>
 </body>
 </html>
