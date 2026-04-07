@@ -478,20 +478,16 @@ function cls(n){return n>0?'pos':n<0?'neg':'';}
 function renderAll(){renderSummary();renderHoldings();renderRealized();}
 
 function renderSummary(){
-  if(!ST.fxReady&&ST.holdings.some(h=>h.market!=='TW')){
-    document.getElementById('s-tv').textContent='NT$ –';
-    document.getElementById('s-pnl').textContent='等待匯率...';
-    document.getElementById('s-pnl').className='cv';
-    document.getElementById('s-pp').textContent='–';
-    document.getElementById('s-total-pnl').textContent='NT$ –';
-    document.getElementById('s-total-pnl-pct').textContent='–';
-    document.getElementById('s-ct').textContent='NT$ –';
-    document.getElementById('s-cs').textContent='–';
-    document.getElementById('s-tc').textContent=ST.holdings.length+' 檔持股';
-    return;
-  }
+  // 有非台股持股且匯率未就緒時，仍繼續計算但只用台股部分
+  // 不再 return，改為在計算時跳過無匯率的股票
   let tv=0,tc=0,has=false;
-  ST.holdings.forEach(h=>{const p=ST.prices[h.symbol+'|'+h.market];if(p?.price!=null){tv+=toTWD(p.price,h.market)*h.shares;has=true;}tc+=h.costTWD;});
+  ST.holdings.forEach(h=>{
+    const p=ST.prices[h.symbol+'|'+h.market];
+    // 台股不需匯率，美股/日股需要匯率才能換算
+    const canCalc = h.market==='TW' || ST.fxReady;
+    if(p?.price!=null && canCalc){tv+=toTWD(p.price,h.market)*h.shares;has=true;}
+    tc+=h.costTWD;
+  });
   const pnl=has?tv-tc:null,pct=tc>0&&pnl!=null?(pnl/tc*100):null;
   const rt=ST.realized.reduce((s,r)=>s+(r.pnlTWD||0),0);
 
