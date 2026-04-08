@@ -183,6 +183,20 @@ td{padding:11px 13px;vertical-align:middle;}
 
 @keyframes rotating{to{transform:rotate(360deg);}}
 .spin-icon{display:inline-block;animation:rotating 1s linear infinite;}
+
+/* Chart Modal */
+.chart-wrap{width:100%;overflow:hidden;}
+.chart-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:8px;}
+.chart-range{display:flex;gap:4px;}
+.chart-range-btn{background:var(--sf2);border:1px solid var(--bd);border-radius:6px;color:var(--mu);cursor:pointer;padding:4px 10px;font-size:11px;font-family:var(--mn);transition:all .15s;}
+.chart-range-btn.active{background:var(--gr);color:#0d0f14;border-color:var(--gr);font-weight:700;}
+.chart-empty{text-align:center;padding:40px 0;color:var(--mu);font-size:13px;line-height:2;}
+.chart-stat{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:14px;}
+.chart-stat-item{background:var(--sf2);border-radius:var(--rs);padding:10px;text-align:center;}
+.chart-stat-lbl{font-size:10px;color:var(--mu);font-family:var(--mn);margin-bottom:3px;}
+.chart-stat-val{font-size:13px;font-weight:700;font-family:var(--mn);}
+.card-clickable{cursor:pointer;transition:opacity .15s;}
+.card-clickable:active{opacity:.8;}
 </style>
 </head>
 <body>
@@ -228,8 +242,8 @@ td{padding:11px 13px;vertical-align:middle;}
 </div>
 
 <div class="sg-top">
-  <div class="card card-big">
-    <div class="cl">總資產（台幣）</div>
+  <div class="card card-big card-clickable" onclick="openChart()" style="--ct:rgba(110,231,183,.4);">
+    <div class="cl">總資產（台幣）&nbsp;↗</div>
     <div class="cv" id="s-tv">NT$ 0</div>
     <div class="cs" id="s-tc">0 檔持股</div>
   </div>
@@ -373,12 +387,54 @@ td{padding:11px 13px;vertical-align:middle;}
 </div>
 </div>
 
+<!-- Chart Modal -->
+<div class="overlay" id="chartModal">
+<div class="modal" style="max-width:560px;">
+  <span class="modal-drag"></span>
+  <div class="chart-header">
+    <div>
+      <div class="modal-title">資產走勢</div>
+      <div class="modal-sub" style="margin-bottom:0">每日總資產變化</div>
+    </div>
+    <div class="chart-range">
+      <button class="chart-range-btn active" onclick="setChartRange(7,this)">7天</button>
+      <button class="chart-range-btn" onclick="setChartRange(30,this)">30天</button>
+      <button class="chart-range-btn" onclick="setChartRange(90,this)">90天</button>
+      <button class="chart-range-btn" onclick="setChartRange(0,this)">全部</button>
+    </div>
+  </div>
+  <div class="chart-wrap" id="chartWrap"></div>
+  <div class="chart-stat" id="chartStat"></div>
+  <div class="modal-actions" style="margin-top:16px;">
+    <button class="btn" onclick="closeModal('chartModal')">關閉</button>
+  </div>
+</div>
+</div>
+
 <script>
 const CUR={TW:'TWD',US:'USD',JP:'JPY'};
 const GAS_URL='https://script.google.com/macros/s/AKfycbxUO9NbXf5gduZFF0uapUzJSvegoM9dtzEi2UuVtdKtDHC_t1wujv8M1fPy41-2ziei0Q/exec';
 const ST={holdings:[],realized:[],fx:{USD_TWD:null,JPY_TWD:null},prices:{},tab:'all',sellId:null,editId:null,gasUrl:GAS_URL,fxReady:false};
 
-function save(){try{localStorage.setItem('sl6_h',JSON.stringify(ST.holdings));localStorage.setItem('sl6_r',JSON.stringify(ST.realized));}catch(e){}}
+function save(){
+  try{
+    localStorage.setItem('sl6_h',JSON.stringify(ST.holdings));
+    localStorage.setItem('sl6_r',JSON.stringify(ST.realized));
+  }catch(e){}
+  // 同步持股到 GAS（讓 GAS 可以每天自動快照）
+  syncHoldingsToGAS();
+}
+async function syncHoldingsToGAS(){
+  if(!ST.gasUrl||!ST.holdings.length)return;
+  try{
+    const form=new FormData();
+    form.append('action','syncHoldings');
+    form.append('holdings',JSON.stringify(ST.holdings.map(h=>({
+      symbol:h.symbol,market:h.market,shares:h.shares,costTWD:h.costTWD,avgPrice:h.avgPrice
+    }))));
+    await fetch(ST.gasUrl,{method:'POST',body:form});
+  }catch(e){console.log('sync error:',e.message);}
+}
 function load(){
   try{
     let h=localStorage.getItem('sl6_h');
@@ -463,6 +519,8 @@ async function fetchQuotes(){
     }else ST.holdings.forEach(h=>{ST.prices[h.symbol+'|'+h.market]={status:'error'};});
   }catch(e){ST.holdings.forEach(h=>{ST.prices[h.symbol+'|'+h.market]={status:'error'};});}
   save();renderAll();
+  // 每天第一次載入報價後自動存快照
+  saveSnapshot();
 }
 
 async function refreshAll(){
@@ -738,6 +796,162 @@ function recalcCosts(){
     h.costTWD=h.avgPrice*h.shares*fx;h.buyFx=fx;
   });
   save();renderAll();alert('成本已重新計算完成！');
+}
+
+// ── 資產歷史快照 ──────────────────────────────────────────────────────
+function saveSnapshot(){
+  const today = new Date().toISOString().slice(0,10);
+  let snapshots = JSON.parse(localStorage.getItem('sl6_snap')||'[]');
+  // 每天只記錄一次
+  if(snapshots.length && snapshots[snapshots.length-1].date === today) return;
+  // 需要有報價才記錄
+  const tv = calcTotalValue();
+  if(tv === null) return;
+  snapshots.push({date: today, value: Math.round(tv)});
+  // 最多保留 365 天
+  if(snapshots.length > 365) snapshots = snapshots.slice(-365);
+  localStorage.setItem('sl6_snap', JSON.stringify(snapshots));
+}
+
+function calcTotalValue(){
+  let tv = 0, has = false;
+  ST.holdings.forEach(h=>{
+    const p = ST.prices[h.symbol+'|'+h.market];
+    const canCalc = h.market==='TW' || ST.fxReady;
+    if(p?.price!=null && canCalc){tv+=toTWD(p.price,h.market)*h.shares;has=true;}
+  });
+  return has ? tv : null;
+}
+
+let chartRange = 7;
+function setChartRange(days, el){
+  chartRange = days;
+  document.querySelectorAll('.chart-range-btn').forEach(b=>b.classList.remove('active'));
+  el.classList.add('active');
+  renderChart();
+}
+
+async function openChart(){
+  openModal('chartModal');
+  // 先用本地資料渲染
+  renderChart();
+  // 再從 GAS 拉最新快照
+  if(ST.gasUrl){
+    try{
+      const form=new FormData();
+      form.append('action','getSnapshots');
+      const r=await fetch(ST.gasUrl,{method:'POST',body:form});
+      const d=await r.json();
+      if(d?.snapshots?.length){
+        // 合併 GAS 快照和本地快照，GAS 優先
+        const gasSnaps=d.snapshots;
+        localStorage.setItem('sl6_snap',JSON.stringify(gasSnaps));
+        renderChart();
+      }
+    }catch(e){console.log('getSnapshots error:',e.message);}
+  }
+}
+
+function renderChart(){
+  const wrap = document.getElementById('chartWrap');
+  const statEl = document.getElementById('chartStat');
+  let snapshots = JSON.parse(localStorage.getItem('sl6_snap')||'[]');
+
+  if(!snapshots.length){
+    wrap.innerHTML = '<div class="chart-empty">📊<br>尚無歷史資料<br><span style="font-size:11px;color:var(--mu)">每天開啟 App 會自動記錄一筆</span></div>';
+    statEl.innerHTML = '';
+    return;
+  }
+
+  // 篩選範圍
+  let data = snapshots;
+  if(chartRange > 0){
+    const cutoff = new Date();
+    cutoff.setDate(cutoff.getDate() - chartRange);
+    const cutoffStr = cutoff.toISOString().slice(0,10);
+    data = snapshots.filter(s => s.date >= cutoffStr);
+  }
+  if(!data.length) data = snapshots.slice(-1);
+
+  // SVG 折線圖
+  const W = 500, H = 180, PL = 60, PR = 10, PT = 16, PB = 32;
+  const vals = data.map(d=>d.value);
+  const minV = Math.min(...vals), maxV = Math.max(...vals);
+  const range = maxV - minV || 1;
+
+  const xScale = i => PL + (i/(data.length-1||1))*(W-PL-PR);
+  const yScale = v => PT + (1-(v-minV)/range)*(H-PT-PB);
+
+  // 建立路徑
+  const points = data.map((d,i)=>({x:xScale(i),y:yScale(d.value),d}));
+  const linePath = points.map((p,i)=>(i===0?`M${p.x},${p.y}`:`L${p.x},${p.y}`)).join(' ');
+  const areaPath = `${linePath} L${points[points.length-1].x},${H-PB} L${PL},${H-PB} Z`;
+
+  // 顏色判斷
+  const isUp = vals[vals.length-1] >= vals[0];
+  const lineColor = isUp ? '#6ee7b7' : '#f87171';
+  const areaColor = isUp ? 'rgba(110,231,183,0.12)' : 'rgba(248,113,113,0.12)';
+
+  // Y 軸標籤
+  const yLabels = [minV, (minV+maxV)/2, maxV].map((v,i)=>{
+    const y = yScale(v);
+    const label = v>=1000000 ? (v/1000000).toFixed(1)+'M' : v>=1000 ? (v/1000).toFixed(0)+'K' : v.toFixed(0);
+    return `<text x="${PL-6}" y="${y+4}" text-anchor="end" font-size="9" fill="#6b7280" font-family="monospace">${label}</text>`;
+  }).join('');
+
+  // X 軸標籤（最多顯示 5 個）
+  const xStep = Math.ceil(data.length/5);
+  const xLabels = data.filter((_,i)=>i%xStep===0||i===data.length-1).map((d,_,arr)=>{
+    const i = data.indexOf(d);
+    const x = xScale(i);
+    const label = d.date.slice(5); // MM-DD
+    return `<text x="${x}" y="${H-PB+14}" text-anchor="middle" font-size="9" fill="#6b7280" font-family="monospace">${label}</text>`;
+  }).join('');
+
+  // 最後一點標示
+  const last = points[points.length-1];
+  const lastLabel = fmtNT(last.d.value);
+
+  wrap.innerHTML = `
+    <svg viewBox="0 0 ${W} ${H}" width="100%" style="display:block;">
+      <defs>
+        <linearGradient id="ag" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="${lineColor}" stop-opacity="0.3"/>
+          <stop offset="100%" stop-color="${lineColor}" stop-opacity="0"/>
+        </linearGradient>
+      </defs>
+      <!-- Grid lines -->
+      <line x1="${PL}" y1="${PT}" x2="${W-PR}" y2="${PT}" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>
+      <line x1="${PL}" y1="${(PT+H-PB)/2}" x2="${W-PR}" y2="${(PT+H-PB)/2}" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>
+      <line x1="${PL}" y1="${H-PB}" x2="${W-PR}" y2="${H-PB}" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>
+      <!-- Area -->
+      <path d="${areaPath}" fill="url(#ag)"/>
+      <!-- Line -->
+      <path d="${linePath}" fill="none" stroke="${lineColor}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      <!-- Last point dot -->
+      <circle cx="${last.x}" cy="${last.y}" r="4" fill="${lineColor}"/>
+      <!-- Labels -->
+      ${yLabels}${xLabels}
+    </svg>`;
+
+  // 統計
+  const first = vals[0], lastV = vals[vals.length-1];
+  const change = lastV - first;
+  const changePct = first > 0 ? (change/first*100) : 0;
+  const maxVal = Math.max(...vals), minVal = Math.min(...vals);
+  statEl.innerHTML = `
+    <div class="chart-stat-item">
+      <div class="chart-stat-lbl">期間變化</div>
+      <div class="chart-stat-val ${cls(change)}">${change>=0?'+':''}${fmtNT(change)}</div>
+    </div>
+    <div class="chart-stat-item">
+      <div class="chart-stat-lbl">報酬率</div>
+      <div class="chart-stat-val ${cls(changePct)}">${changePct>=0?'+':''}${changePct.toFixed(2)}%</div>
+    </div>
+    <div class="chart-stat-item">
+      <div class="chart-stat-lbl">最高/最低</div>
+      <div class="chart-stat-val" style="font-size:11px">${(maxVal/10000).toFixed(0)}萬<br><span style="color:var(--mu)">${(minVal/10000).toFixed(0)}萬</span></div>
+    </div>`;
 }
 
 load();updateBanner();renderAll();
