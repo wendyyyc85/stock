@@ -1,5 +1,4 @@
 <!DOCTYPE html>
-
 <html lang="zh-TW">
 <head>
 <meta charset="UTF-8">
@@ -8,31 +7,31 @@
 
 <style>
 :root{
-  --bg:#0d0f14;--sf:#13161e;--sf2:#1a1e2a;
-  --bd:rgba(255,255,255,0.07);--bd2:rgba(255,255,255,0.13);
-  --tx:#e8eaf0;--mu:#6b7280;--mu2:#9ca3af;
-  --gr:#6ee7b7;--gr2:#34d399;--rd:#f87171;--bl:#60a5fa;--yw:#fbbf24;--pu:#a78bfa;
-  --mn:'SF Mono','Monaco','Menlo','Courier New',monospace;--sn:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+  --bg:#f2f2f7;--sf:#ffffff;--sf2:#f8f8f8;
+  --bd:rgba(0,0,0,0.06);--bd2:rgba(0,0,0,0.1);
+  --tx:#000000;--mu:#8e8e93;--mu2:#c7c7cc;
+  --gr:#1a9e5c;--gr2:#16a34a;--rd:#d93025;--bl:#1a6ef5;--yw:#e68a00;--pu:#8e8e93;
+  --mn:'Hiragino Sans','ヒラギノ角ゴ ProN W3',-apple-system,monospace;--sn:'Hiragino Sans','ヒラギノ角ゴ ProN W3',-apple-system,BlinkMacSystemFont,sans-serif;
   --r:14px;--rs:8px;
 }
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
 body{background:var(--bg);color:var(--tx);font-family:var(--sn);min-height:100vh;font-size:14px;line-height:1.6;overflow-x:hidden;}
-body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(110,231,183,0.025) 1px,transparent 1px),linear-gradient(90deg,rgba(110,231,183,0.025) 1px,transparent 1px);background-size:40px 40px;pointer-events:none;z-index:0;}
+
 .app{position:relative;z-index:1;max-width:1120px;margin:0 auto;padding:18px 14px 110px;}
 
 header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;}
 .logo{display:flex;align-items:center;gap:9px;}
-.logo-mark{width:34px;height:34px;min-width:34px;border-radius:9px;background:linear-gradient(135deg,var(--gr),#3b82f6);display:flex;align-items:center;justify-content:center;font-size:17px;}
-.logo-text{font-size:16px;font-weight:700;letter-spacing:-.5px;}
+.logo-mark{width:34px;height:34px;min-width:34px;border-radius:9px;background:linear-gradient(135deg,#34c896,#3b82f6);display:flex;align-items:center;justify-content:center;font-size:17px;}
+.logo-text{font-size:22px;font-weight:700;letter-spacing:-.5px;}
 .logo-sub{font-size:10px;color:var(--mu);font-family:var(--mn);margin-top:1px;display:none;}
 @media(min-width:480px){.logo-sub{display:block;}}
 .header-right{display:flex;gap:8px;}
 
-.btn{padding:9px 14px;border-radius:var(--rs);border:1px solid var(--bd2);background:var(--sf2);color:var(--tx);cursor:pointer;font-family:var(--sn);font-size:13px;font-weight:600;transition:all .15s;display:inline-flex;align-items:center;gap:6px;min-height:40px;white-space:nowrap;}
+.btn{padding:8px 14px;border-radius:var(--rs);border:0.5px solid var(--bd2);background:var(--sf);color:var(--tx);cursor:pointer;font-family:var(--sn);font-size:13px;font-weight:600;transition:all .15s;display:inline-flex;align-items:center;gap:6px;min-height:40px;white-space:nowrap;}
 .btn:active{opacity:.75;}
 .btn:disabled{opacity:.5;cursor:not-allowed;}
-.btn-primary{background:var(--gr);color:#0d0f14;border-color:var(--gr);font-weight:700;}
-.btn-primary:active{background:var(--gr2);}
+.btn-primary{background:#1c1c1e;color:#fff;border-color:#1c1c1e;font-weight:700;}
+.btn-primary:active{background:#3c3c43;}
 @media(hover:hover){.btn:hover{border-color:var(--gr);color:var(--gr);}.btn-primary:hover{background:var(--gr2);color:#0d0f14;}}
 
 .setup-banner{background:var(--sf);border:1px solid rgba(251,191,36,.3);border-radius:var(--r);padding:14px 16px;margin-bottom:14px;}
@@ -47,12 +46,12 @@ header{display:flex;align-items:center;justify-content:space-between;margin-bott
 .url-btns{display:flex;gap:8px;}
 .setup-ok{font-size:12px;color:var(--gr);margin-top:8px;}
 
-.fx-bar{display:grid;grid-template-columns:1fr 1fr 1fr;background:var(--sf);border:1px solid var(--bd);border-radius:var(--rs);margin-bottom:14px;overflow:hidden;font-family:var(--mn);}
-.fx-item{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:9px 6px;border-right:1px solid var(--bd);}
-.fx-item:last-child{border-right:none;}
-.fx-lbl{font-size:9px;color:var(--mu);text-transform:uppercase;letter-spacing:.05em;margin-bottom:2px;}
-.fx-val{font-size:13px;font-weight:500;}
-.fx-st{display:flex;align-items:center;gap:4px;font-size:10px;color:var(--mu);}
+.fx-bar{display:flex;align-items:center;justify-content:space-between;background:var(--sf);border:0.5px solid var(--bd);border-radius:var(--rs);margin-bottom:12px;padding:8px 14px;font-family:var(--mn);}
+.fx-item{display:flex;align-items:center;gap:5px;padding:0;}
+
+.fx-lbl{font-size:11px;color:var(--mu);}
+.fx-val{font-size:11px;font-weight:600;color:var(--tx);}
+.fx-st{display:flex;align-items:center;gap:4px;font-size:11px;color:var(--mu);}
 .dot{display:inline-block;width:7px;height:7px;border-radius:50%;}
 .dot-ok{background:var(--gr);}.dot-warn{background:var(--yw);}
 .dot-spin{width:9px;height:9px;border:1.5px solid var(--bd2);border-top-color:var(--gr);border-radius:50%;animation:spin .8s linear infinite;display:inline-block;}
@@ -60,31 +59,31 @@ header{display:flex;align-items:center;justify-content:space-between;margin-bott
 
 .sg-top{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:9px;}
 .sg-bot{display:grid;grid-template-columns:1fr 1fr 1fr;gap:9px;margin-bottom:16px;}
-.card-big .cv{font-size:22px;}
-@media(min-width:640px){.card-big .cv{font-size:26px;}}
+.card-big .cv{font-size:28px;letter-spacing:-1px;}
+@media(min-width:640px){.card-big .cv{font-size:30px;}}
 .card{background:var(--sf);border:1px solid var(--bd);border-radius:var(--r);padding:13px 14px;position:relative;overflow:hidden;}
-.card::after{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--ct,var(--bd)),transparent);}
-.card.green{--ct:rgba(110,231,183,.4);}.card.red{--ct:rgba(248,113,113,.4);}.card.blue{--ct:rgba(96,165,250,.4);}.card.purple{--ct:rgba(167,139,250,.4);}
-.cl{font-size:10px;color:var(--mu);font-family:var(--mn);text-transform:uppercase;letter-spacing:.07em;margin-bottom:5px;}
-.cv{font-size:17px;font-weight:700;font-family:var(--mn);letter-spacing:-1px;}
-@media(min-width:640px){.cv{font-size:21px;}}
-.cs{font-size:10px;color:var(--mu);margin-top:3px;font-family:var(--mn);}
+.card::after{display:none;}
+
+.cl{font-size:9px;color:var(--mu);font-family:var(--mn);text-transform:uppercase;letter-spacing:.07em;margin-bottom:4px;}
+.cv{font-size:15px;font-weight:700;font-family:var(--mn);letter-spacing:-.5px;}
+@media(min-width:640px){.cv{font-size:17px;}}
+.cs{font-size:10px;color:var(--mu);margin-top:2px;font-family:var(--mn);}
 .pos{color:var(--gr);}.neg{color:var(--rd);}
 
 .sec-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;gap:8px;}
 .sec-tt{font-size:11px;font-weight:600;color:var(--mu);font-family:var(--mn);text-transform:uppercase;letter-spacing:.08em;}
 .tabs{display:flex;gap:3px;background:var(--sf);border-radius:var(--rs);padding:3px;border:1px solid var(--bd);}
 .tab{padding:5px 10px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600;color:var(--mu);transition:all .15s;}
-.tab.active{background:var(--sf2);color:var(--tx);border:1px solid var(--bd2);}
+.tab.active{background:#e5e5ea;color:#000;border:none;}
 
 .hcards{display:flex;flex-direction:column;gap:9px;margin-bottom:18px;}
-.hcard{background:var(--sf);border:1px solid var(--bd);border-radius:var(--r);padding:13px 14px;}
+.hcard{background:var(--sf);border:0.5px solid var(--bd);border-radius:var(--r);padding:12px 14px;}
 .hcard-head{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px;}
 .hcard-lft{display:flex;align-items:center;gap:8px;}
 .badge{font-size:9px;font-family:var(--mn);font-weight:500;padding:2px 6px;border-radius:4px;text-transform:uppercase;letter-spacing:.06em;}
-.badge-TW{background:rgba(110,231,183,.12);color:var(--gr);border:1px solid rgba(110,231,183,.2);}
-.badge-US{background:rgba(96,165,250,.15);color:var(--bl);border:1px solid rgba(96,165,250,.2);}
-.badge-JP{background:rgba(251,191,36,.12);color:var(--yw);border:1px solid rgba(251,191,36,.2);}
+.badge-TW{background:#f0faf5;color:#1a9e5c;border:0.5px solid #a7e4c8;}
+.badge-US{background:#eff6ff;color:#1a6ef5;border:0.5px solid #bfdbfe;}
+.badge-JP{background:#fff8ed;color:#e68a00;border:0.5px solid #fcd9a0;}
 .hcard-sym{font-weight:700;font-family:var(--mn);font-size:15px;}
 .hcard-nm{font-size:11px;color:var(--mu);margin-top:1px;}
 .hcard-rgt{text-align:right;}
@@ -109,9 +108,9 @@ header{display:flex;align-items:center;justify-content:space-between;margin-bott
 .htx-cost{font-size:11px;color:var(--mu);margin-top:1px;}
 .history-toggle{font-size:11px;color:var(--mu);font-family:var(--mn);cursor:pointer;margin-top:6px;text-align:center;padding:4px;border:1px solid var(--bd);border-radius:6px;transition:all .15s;}
 .history-toggle:active{background:var(--sf2);}
-.ab{flex:1;background:none;border:1px solid var(--bd2);border-radius:6px;color:var(--mu2);cursor:pointer;padding:8px 0;font-size:12px;font-family:var(--mn);text-align:center;transition:all .12s;}
+.ab{flex:1;background:#f2f2f7;border:none;border-radius:6px;color:#3c3c43;cursor:pointer;padding:8px 0;font-size:12px;font-family:var(--mn);text-align:center;transition:all .12s;}
 .ab:active{opacity:.7;}
-@media(hover:hover){.ab.edit:hover{border-color:var(--bl);color:var(--bl);}.ab.sell:hover{border-color:var(--gr);color:var(--gr);}.ab.del:hover{border-color:var(--rd);color:var(--rd);}}
+.ab.del{color:#d93025;}
 
 .htable-wrap{display:none;}
 @media(min-width:768px){
@@ -150,10 +149,10 @@ td{padding:11px 13px;vertical-align:middle;}
 .tag{display:inline-block;font-size:10px;font-family:var(--mn);padding:2px 7px;border-radius:20px;font-weight:500;}
 .tag-sell{background:rgba(248,113,113,.1);color:var(--rd);border:1px solid rgba(248,113,113,.2);}
 
-.overlay{position:fixed;inset:0;background:rgba(0,0,0,.72);backdrop-filter:blur(4px);z-index:200;display:none;align-items:flex-end;justify-content:center;opacity:0;pointer-events:none;transition:opacity .2s;}
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);backdrop-filter:blur(4px);z-index:200;display:none;align-items:flex-end;justify-content:center;opacity:0;pointer-events:none;transition:opacity .2s;}
 @media(min-width:600px){.overlay{align-items:center;}}
 .overlay.open{opacity:1;pointer-events:all;}
-.modal{background:var(--sf);border:1px solid var(--bd2);width:100%;max-width:480px;padding:20px 18px 36px;transform:translateY(40px);transition:transform .25s cubic-bezier(.32,.72,0,1);border-radius:20px 20px 0 0;max-height:92vh;overflow-y:auto;-webkit-overflow-scrolling:touch;}
+.modal{background:#fff;border:0.5px solid var(--bd);width:100%;max-width:480px;padding:20px 18px 36px;transform:translateY(40px);transition:transform .25s cubic-bezier(.32,.72,0,1);border-radius:20px 20px 0 0;max-height:92vh;overflow-y:auto;-webkit-overflow-scrolling:touch;}
 @media(min-width:600px){.modal{border-radius:18px;padding:26px;transform:translateY(20px);max-height:88vh;}}
 .overlay.open .modal{transform:translateY(0);}
 .modal-drag{width:40px;height:4px;background:var(--bd2);border-radius:2px;margin:0 auto 16px;display:block;}
@@ -175,7 +174,7 @@ td{padding:11px 13px;vertical-align:middle;}
 .divider{border:none;border-top:1px solid var(--bd);margin:13px 0;}
 .edit-warn{background:rgba(251,191,36,.08);border:1px solid rgba(251,191,36,.2);border-radius:var(--rs);padding:9px 12px;font-size:12px;color:var(--yw);margin-bottom:13px;line-height:1.6;}
 
-.fab{position:fixed;bottom:22px;right:16px;z-index:100;width:54px;height:54px;border-radius:50%;background:var(--gr);color:#0d0f14;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:26px;box-shadow:0 4px 18px rgba(110,231,183,.35);transition:transform .15s;}
+.fab{position:fixed;bottom:22px;right:16px;z-index:100;width:54px;height:54px;border-radius:50%;background:#1c1c1e;color:#fff;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:26px;box-shadow:0 4px 18px rgba(110,231,183,.35);transition:transform .15s;}
 .fab:active{transform:scale(.91);}
 @media(min-width:600px){.fab{display:none;}}
 .add-desktop{display:none;}
@@ -184,17 +183,15 @@ td{padding:11px 13px;vertical-align:middle;}
 @keyframes rotating{to{transform:rotate(360deg);}}
 .spin-icon{display:inline-block;animation:rotating 1s linear infinite;}
 </style>
-
 </head>
 <body>
 <div class="app">
 
 <header>
   <div class="logo">
-    <div class="logo-mark">📈</div>
     <div>
       <div class="logo-text">StockLens</div>
-      <div class="logo-sub">美股 · 台股 · 日股</div>
+      <div class="logo-sub" style="display:block !important;">2026年4月8日</div>
     </div>
   </div>
   <div class="header-right">
@@ -222,22 +219,24 @@ td{padding:11px 13px;vertical-align:middle;}
 </div>
 
 <div class="fx-bar">
-  <div class="fx-item"><div class="fx-lbl">USD/TWD</div><div class="fx-val" id="fx-usd">－</div></div>
-  <div class="fx-item"><div class="fx-lbl">JPY/TWD</div><div class="fx-val" id="fx-jpy">－</div></div>
-  <div class="fx-item"><div class="fx-lbl">匯率</div><div class="fx-st"><span id="fx-dot" class="dot-spin"></span><span id="fx-time">載入中</span></div></div>
+  <div style="display:flex;gap:14px;align-items:center;">
+    <div class="fx-item"><div class="fx-lbl">USD/TWD</div><div class="fx-val" id="fx-usd">－</div></div>
+    <div class="fx-item"><div class="fx-lbl">JPY/TWD</div><div class="fx-val" id="fx-jpy">－</div></div>
+  </div>
+  <div class="fx-st"><span id="fx-dot" class="dot-spin"></span><span id="fx-time">載入中</span></div>
 </div>
 
 <div class="sg-top">
-  <div class="card card-big green">
+  <div class="card card-big">
     <div class="cl">總資產（台幣）</div>
     <div class="cv" id="s-tv">NT$ 0</div>
     <div class="cs" id="s-tc">0 檔持股</div>
   </div>
   <div class="card card-big" id="s-total-pnl-card">
-    <div class="cl">總損益（未實現＋已實現）</div>
+    <div class="cl">總損益</div>
     <div class="cv" id="s-total-pnl">NT$ 0</div>
     <div style="display:flex;align-items:center;gap:8px;margin-top:3px;">
-      <div class="cs" id="s-total-pnl-pct" style="font-size:13px;font-weight:700;font-family:var(--mn);">0.00%</div>
+      <div class="cs" id="s-total-pnl-pct" style="font-size:12px;font-weight:700;font-family:var(--mn);">0.00%</div>
     </div>
   </div>
 </div>
@@ -498,7 +497,7 @@ function renderSummary(){
   document.getElementById('s-pnl').className='cv '+(pnl!=null?cls(pnl):'');
   document.getElementById('s-pp').textContent=pct!=null?(pct>=0?'+':'')+pct.toFixed(2)+'%':'–';
   document.getElementById('s-pp').className='cs '+cls(pct);
-  document.getElementById('s-pc').className='card '+(pnl==null?'':pnl>=0?'green':'red');
+  document.getElementById('s-pc').className='card';
 
   document.getElementById('s-rl').textContent=fmtNT(rt);
   document.getElementById('s-rl').className='cv '+cls(rt);
@@ -515,7 +514,7 @@ function renderSummary(){
   document.getElementById('s-total-pnl').className='cv '+cls(totalPnl);
   document.getElementById('s-total-pnl-pct').textContent=totalPnlPct!=null?(totalPnlPct>=0?'+':'')+totalPnlPct.toFixed(2)+'%':'–';
   document.getElementById('s-total-pnl-pct').className='cs '+cls(totalPnlPct);
-  document.getElementById('s-total-pnl-card').className='card card-big '+(totalPnl>=0?'green':'red');
+  document.getElementById('s-total-pnl-card').className='card card-big';
 }
 
 function list(){return ST.tab==='all'?ST.holdings:ST.holdings.filter(h=>h.market===ST.tab);}
@@ -543,24 +542,24 @@ function renderHoldings(){
     const dn=ST.prices[h.symbol+'|'+h.market]?.name||h.name||'';
     const sh=h.shares%1===0?fmt(h.shares):fmt(h.shares,3);
     return `<div class="hcard">
-      <div class="hcard-head">
-        <div class="hcard-lft">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+        <div style="display:flex;align-items:center;gap:8px;">
           <span class="badge badge-${h.market}">${h.market}</span>
-          <div><div class="hcard-sym">${h.symbol}</div><div class="hcard-nm">${dn}</div></div>
+          <span class="hcard-sym">${h.symbol}</span>
         </div>
-        <div class="hcard-rgt"><div class="hcard-pv">${ph}</div><div class="hcard-pl">現價</div></div>
+        <span style="font-size:13px;font-weight:600;color:var(--tx);">${ph}</span>
       </div>
-      <div class="hcard-body">
-        <div class="hstat"><div class="hstat-l">持股數量</div><div class="hstat-v">${sh}</div></div>
-        <div class="hstat"><div class="hstat-l">買入均價</div><div class="hstat-v">${cur} ${fmt(h.avgPrice,2)}</div></div>
-        <div class="hstat"><div class="hstat-l">投入成本（台幣）</div><div class="hstat-v">${fmtNT(h.costTWD)}</div></div>
-        <div class="hstat hpnl" style="align-items:flex-end">
-          <div class="hstat-l">未實現損益</div>
-          <div class="hpnl-t ${cls(pl)}">${pl!=null?fmtNT(pl):'－'}</div>
-          <div class="hpnl-p ${cls(pp)}">${pp!=null?(pp>=0?'+':'')+pp.toFixed(2)+'%':''}</div>
+      <div style="display:flex;justify-content:space-between;align-items:flex-end;">
+        <div>
+          <div class="hcard-nm">${dn}</div>
+          <div style="font-size:11px;color:var(--mu);margin-top:2px;">成本 ${fmtNT(h.costTWD)} · ${sh} 股</div>
+        </div>
+        <div style="text-align:right;">
+          <div style="font-size:13px;font-weight:700;" class="${cls(pl)}">${pl!=null?fmtNT(pl):'－'}</div>
+          <div style="font-size:11px;font-weight:600;" class="${cls(pp)}">${pp!=null?(pp>=0?'+':'')+pp.toFixed(2)+'%':''}</div>
         </div>
       </div>
-      <div class="hcard-acts">
+      <div style="display:flex;gap:7px;margin-top:10px;">
         <button class="ab edit" onclick="openEdit('${h.id}')">編輯</button>
         <button class="ab sell" onclick="openSell('${h.id}')">賣出</button>
         <button class="ab del" onclick="del('${h.id}')">刪除</button>
@@ -757,6 +756,5 @@ fetchFX().then(()=>{
   else renderAll();
 });
 </script>
-
 </body>
 </html>
