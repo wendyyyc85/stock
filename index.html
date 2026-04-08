@@ -57,10 +57,11 @@ header{display:flex;align-items:center;justify-content:space-between;margin-bott
 .dot-spin{width:9px;height:9px;border:1.5px solid var(--bd2);border-top-color:var(--gr);border-radius:50%;animation:spin .8s linear infinite;display:inline-block;}
 @keyframes spin{to{transform:rotate(360deg);}}
 
-.sg-top{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:9px;}
+.sg-top{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:9px;align-items:stretch;}
 .sg-bot{display:grid;grid-template-columns:1fr 1fr 1fr;gap:9px;margin-bottom:16px;}
-.card-big .cv{font-size:20px;letter-spacing:-.5px;}
+.card-big .cv{font-size:20px;letter-spacing:-.5px;white-space:nowrap;overflow:hidden;font-size:clamp(14px,4.5vw,22px);}
 @media(min-width:640px){.card-big .cv{font-size:24px;}}
+.sg-top .card{min-height:110px;display:flex;flex-direction:column;justify-content:space-between;}
 .card{background:var(--sf);border:1px solid var(--bd);border-radius:var(--r);padding:13px 14px;position:relative;overflow:hidden;}
 .card::after{display:none;}
 
