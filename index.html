@@ -86,16 +86,16 @@ header{display:flex;align-items:center;justify-content:space-between;margin-bott
 .badge-US{background:#eff6ff;color:#1a6ef5;border:0.5px solid #bfdbfe;}
 .badge-JP{background:#fff8ed;color:#e68a00;border:0.5px solid #fcd9a0;}
 .hcard-sym{font-weight:700;font-family:var(--mn);font-size:15px;}
-.hcard-nm{font-size:11px;color:var(--mu);margin-top:1px;}
-.hcard-rgt{text-align:right;}
-.hcard-pv{font-family:var(--mn);font-weight:600;font-size:14px;}
+.hcard-nm{font-size:11px;color:var(--mu);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:180px;}
+.hcard-rgt{text-align:right;min-width:0;}
+.hcard-pv{font-family:var(--mn);font-weight:600;font-size:14px;white-space:nowrap;}
 .hcard-pl{font-size:10px;color:var(--mu);font-family:var(--mn);margin-top:2px;}
 .hcard-body{display:grid;grid-template-columns:1fr 1fr;gap:4px;padding:9px 0;border-top:1px solid var(--bd);border-bottom:1px solid var(--bd);margin-bottom:10px;}
 .hstat{display:flex;flex-direction:column;gap:2px;}
 .hstat-l{font-size:10px;color:var(--mu);font-family:var(--mn);}
 .hstat-v{font-size:12px;font-family:var(--mn);font-weight:500;}
 .hpnl{display:flex;flex-direction:column;align-items:flex-end;}
-.hpnl-t{font-size:13px;font-weight:700;font-family:var(--mn);}
+.hpnl-t{font-size:13px;font-weight:700;font-family:var(--mn);white-space:nowrap;}
 .hpnl-p{font-size:11px;font-family:var(--mn);}
 .hcard-acts{display:flex;gap:7px;}
 .hcard-history{display:none;border-top:1px solid var(--bd);margin-top:10px;padding-top:10px;}
@@ -530,6 +530,36 @@ async function refreshAll(){
   btn.innerHTML='⟳ 更新';btn.disabled=false;
 }
 
+// 公司名稱縮寫
+const NAME_MAP = {
+  'TAIWAN SEMICONDUCTOR': 'TSM',
+  'TAIWAN SEMICONDUCTOR MANUFACTURING': 'TSM',
+  'TAIWAN SEMICONDUCTOR MANUFACTUR': 'TSM',
+  'APPLE': 'Apple',
+  'MICROSOFT': 'Microsoft',
+  'NVIDIA': 'NVIDIA',
+  'AMAZON': 'Amazon',
+  'ALPHABET': 'Alphabet',
+  'META PLATFORMS': 'Meta',
+  'TESLA': 'Tesla',
+  'SANDISK': 'SanDisk',
+  'MICRON TECHNOLOGY': 'Micron',
+  'YUANTA': 'Yuanta',
+  'MIPOX': 'Mipox',
+  'WIN SEMICONDUCTORS': 'WIN Semi',
+  'TOWER SEMICONDUCTOR': 'Tower Semi',
+  'APPLIED OPTOELECTRONICS': 'AAOI',
+};
+function shortName(name) {
+  if (!name) return '';
+  const upper = name.toUpperCase();
+  for (const [key, val] of Object.entries(NAME_MAP)) {
+    if (upper.includes(key)) return val;
+  }
+  // 超過 20 字就截斷
+  return name.length > 20 ? name.slice(0, 18) + '…' : name;
+}
+
 function fmt(n,d=0){if(n==null||isNaN(n))return'－';return n.toLocaleString('zh-TW',{minimumFractionDigits:d,maximumFractionDigits:d});}
 function fmtNT(n){if(n==null||isNaN(n))return'－';return(n>=0?'NT$ ':'-NT$ ')+fmt(Math.abs(n));}
 function cls(n){return n>0?'pos':n<0?'neg':'';}
@@ -598,7 +628,8 @@ function renderHoldings(){
     const {html:ph,price:cp}=getPriceDisplay(h),cur=CUR[h.market];
     const vt=cp!=null?toTWD(cp,h.market)*h.shares:null;
     const pl=vt!=null?vt-h.costTWD:null,pp=h.costTWD>0&&pl!=null?(pl/h.costTWD*100):null;
-    const dn=ST.prices[h.symbol+'|'+h.market]?.name||h.name||'';
+    const rawName=ST.prices[h.symbol+'|'+h.market]?.name||h.name||'';
+    const dn=shortName(rawName);
     const sh=h.shares%1===0?fmt(h.shares):fmt(h.shares,3);
     return `<div class="hcard">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
@@ -645,7 +676,8 @@ function renderHoldings(){
     const {html:ph,price:cp}=getPriceDisplay(h),cur=CUR[h.market];
     const vt=cp!=null?toTWD(cp,h.market)*h.shares:null;
     const pl=vt!=null?vt-h.costTWD:null,pp=h.costTWD>0&&pl!=null?(pl/h.costTWD*100):null;
-    const dn=ST.prices[h.symbol+'|'+h.market]?.name||h.name||'';
+    const rawName=ST.prices[h.symbol+'|'+h.market]?.name||h.name||'';
+    const dn=shortName(rawName);
     const sh=h.shares%1===0?fmt(h.shares):fmt(h.shares,3);
     return `<tr>
       <td><div class="sc"><span class="badge badge-${h.market}">${h.market}</span><div><div class="sym">${h.symbol}</div><div class="sym-nm">${dn}</div></div></div></td>
