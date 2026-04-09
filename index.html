@@ -406,6 +406,7 @@ td{padding:11px 13px;vertical-align:middle;}
   <div class="chart-wrap" id="chartWrap"></div>
   <div class="chart-stat" id="chartStat"></div>
   <div class="modal-actions" style="margin-top:16px;">
+    <button class="btn" onclick="clearSnapshots()" style="color:var(--rd);border-color:var(--rd)">清除歷史</button>
     <button class="btn" onclick="closeModal('chartModal')">關閉</button>
   </div>
 </div>
@@ -519,8 +520,6 @@ async function fetchQuotes(){
     }else ST.holdings.forEach(h=>{ST.prices[h.symbol+'|'+h.market]={status:'error'};});
   }catch(e){ST.holdings.forEach(h=>{ST.prices[h.symbol+'|'+h.market]={status:'error'};});}
   save();renderAll();
-  // 每天第一次載入報價後自動存快照
-  saveSnapshot();
 }
 
 async function refreshAll(){
@@ -831,19 +830,8 @@ function recalcCosts(){
 }
 
 // ── 資產歷史快照 ──────────────────────────────────────────────────────
-function saveSnapshot(){
-  const today = new Date().toISOString().slice(0,10);
-  let snapshots = JSON.parse(localStorage.getItem('sl6_snap')||'[]');
-  // 每天只記錄一次
-  if(snapshots.length && snapshots[snapshots.length-1].date === today) return;
-  // 需要有報價才記錄
-  const tv = calcTotalValue();
-  if(tv === null) return;
-  snapshots.push({date: today, value: Math.round(tv)});
-  // 最多保留 365 天
-  if(snapshots.length > 365) snapshots = snapshots.slice(-365);
-  localStorage.setItem('sl6_snap', JSON.stringify(snapshots));
-}
+// 快照由 GAS dailySnapshot 每天凌晨五點自動執行，前端不自行記錄
+// 開啟走勢圖時從 GAS 讀取歷史資料
 
 function calcTotalValue(){
   let tv = 0, has = false;
@@ -853,6 +841,13 @@ function calcTotalValue(){
     if(p?.price!=null && canCalc){tv+=toTWD(p.price,h.market)*h.shares;has=true;}
   });
   return has ? tv : null;
+}
+
+function clearSnapshots(){
+  if(!confirm('確定清除所有走勢歷史記錄？'))return;
+  localStorage.removeItem('sl6_snap');
+  closeModal('chartModal');
+  alert('已清除！');
 }
 
 let chartRange = 7;
