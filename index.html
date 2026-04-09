@@ -885,7 +885,7 @@ function renderChart(){
   let snapshots = JSON.parse(localStorage.getItem('sl6_snap')||'[]');
 
   if(!snapshots.length){
-    wrap.innerHTML = '<div class="chart-empty">📊<br>尚無歷史資料<br><span style="font-size:11px;color:var(--mu)">每天開啟 App 會自動記錄一筆</span></div>';
+    wrap.innerHTML = '<div class="chart-empty">📊<br>尚無歷史資料<br><span style="font-size:11px;color:var(--mu)">每天凌晨五點自動記錄一筆</span></div>';
     statEl.innerHTML = '';
     return;
   }
