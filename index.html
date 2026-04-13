@@ -843,11 +843,30 @@ function calcTotalValue(){
   return has ? tv : null;
 }
 
-function clearSnapshots(){
+async function clearSnapshots(){
   if(!confirm('確定清除所有走勢歷史記錄？'))return;
+  // 清除本地
   localStorage.removeItem('sl6_snap');
+  // 同時清除 GAS 試算表
+  if(ST.gasUrl){
+    try{
+      const form=new FormData();
+      form.append('action','clearSnapshots');
+      const r=await fetch(ST.gasUrl,{method:'POST',body:form});
+      const d=await r.json();
+      if(d?.ok){
+        alert('已清除！');
+      } else {
+        alert('本地已清除，但 GAS 清除失敗：'+(d?.error||'未知錯誤')+'\n請重新部署 GAS 最新版本');
+      }
+    }catch(e){
+      alert('本地已清除，但無法連線 GAS：'+e.message);
+    }
+  } else {
+    alert('已清除！');
+  }
+  renderChart();
   closeModal('chartModal');
-  alert('已清除！');
 }
 
 let chartRange = 7;
