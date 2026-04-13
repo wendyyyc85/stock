@@ -2,1001 +2,1138 @@
 <html lang="zh-TW">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>StockLens</title>
-
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Wendy ID Tracker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
 :root{
-  --bg:#f2f2f7;--sf:#ffffff;--sf2:#f8f8f8;
-  --bd:rgba(0,0,0,0.06);--bd2:rgba(0,0,0,0.1);
-  --tx:#000000;--mu:#8e8e93;--mu2:#c7c7cc;
-  --gr:#1a9e5c;--gr2:#16a34a;--rd:#d93025;--bl:#1a6ef5;--yw:#e68a00;--pu:#8e8e93;
-  --mn:'Hiragino Sans','ヒラギノ角ゴ ProN W3',-apple-system,monospace;--sn:'Hiragino Sans','ヒラギノ角ゴ ProN W3',-apple-system,BlinkMacSystemFont,sans-serif;
-  --r:14px;--rs:8px;
+  --bg:#f5f4f0;--surface:#ffffff;--surface2:#eeece8;--border:#dddbd5;
+  --text:#1a1a18;--text2:#888880;--text3:#b8b6b0;
+  --cad:#1d6fce;--sku:#0d8f5e;--draw:#c4417a;--port:#6d44c4;--model:#c45c10;
+  --done:#0d8f5e;--r:12px;
 }
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
-body{background:var(--bg);color:var(--tx);font-family:var(--sn);min-height:100vh;font-size:14px;line-height:1.6;overflow-x:hidden;}
+body{background:var(--bg);color:var(--text);font-family:'Noto Sans TC',sans-serif;font-size:14px;line-height:1.6;padding-bottom:80px;}
 
-.app{position:relative;z-index:1;max-width:1120px;margin:0 auto;padding:18px 14px 110px;}
+/* HEADER */
+.hdr{position:sticky;top:0;z-index:100;background:var(--bg);border-bottom:1px solid var(--border);padding:14px 18px 10px;}
+.hdr-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
+.app-name{font-size:15px;font-weight:700;}
+.app-sub{font-size:10px;color:var(--text2);font-family:'DM Mono',monospace;margin-top:1px;}
+.wnav{display:flex;align-items:center;gap:8px;}
+.nbtn{width:30px;height:30px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;}
+.nbtn:active{background:var(--border);}
+.wind{font-size:12px;font-weight:500;font-family:'DM Mono',monospace;min-width:40px;text-align:center;}
+.pbar{height:3px;background:var(--border);border-radius:2px;}
+.pfill{height:100%;border-radius:2px;background:linear-gradient(90deg,var(--cad),var(--sku));transition:width .4s;}
 
-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;}
-.logo{display:flex;align-items:center;gap:9px;}
-.logo-mark{width:34px;height:34px;min-width:34px;border-radius:9px;background:linear-gradient(135deg,#34c896,#3b82f6);display:flex;align-items:center;justify-content:center;font-size:17px;}
-.logo-text{font-size:22px;font-weight:700;letter-spacing:-.5px;}
-.logo-sub{font-size:10px;color:var(--mu);font-family:var(--mn);margin-top:1px;display:none;}
-@media(min-width:480px){.logo-sub{display:block;}}
-.header-right{display:flex;gap:8px;}
+/* STATS */
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;padding:10px 18px;border-bottom:1px solid var(--border);}
+.sc{background:var(--surface);border-radius:10px;padding:8px 6px;text-align:center;}
+.sn{font-size:19px;font-weight:700;font-family:'DM Mono',monospace;line-height:1;}
+.sl{font-size:10px;color:var(--text2);margin-top:2px;}
 
-.btn{padding:8px 14px;border-radius:var(--rs);border:0.5px solid var(--bd2);background:var(--sf);color:var(--tx);cursor:pointer;font-family:var(--sn);font-size:13px;font-weight:600;transition:all .15s;display:inline-flex;align-items:center;gap:6px;min-height:40px;white-space:nowrap;}
-.btn:active{opacity:.75;}
-.btn:disabled{opacity:.5;cursor:not-allowed;}
-.btn-primary{background:#1c1c1e;color:#fff;border-color:#1c1c1e;font-weight:700;}
-.btn-primary:active{background:#3c3c43;}
-@media(hover:hover){.btn:hover{border-color:var(--gr);color:var(--gr);}.btn-primary:hover{background:var(--gr2);color:#0d0f14;}}
+/* WEEK DOTS */
+.wdots{display:flex;gap:3px;padding:8px 18px;overflow-x:auto;scrollbar-width:none;border-bottom:1px solid var(--border);}
+.wdots::-webkit-scrollbar{display:none;}
+.wd{flex-shrink:0;width:26px;height:26px;border-radius:50%;border:1.5px solid var(--border);background:transparent;color:var(--text2);font-size:10px;font-weight:500;font-family:'DM Mono',monospace;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s;}
+.wd.active{border-color:var(--text);color:var(--text);background:rgba(26,26,24,.08);}
+.wd.full{background:var(--done);border-color:var(--done);color:#fff;}
+.wd.part{border-color:var(--sku);color:var(--sku);}
 
-.setup-banner{background:var(--sf);border:1px solid rgba(251,191,36,.3);border-radius:var(--r);padding:14px 16px;margin-bottom:14px;}
-.setup-banner.done{border-color:rgba(110,231,183,.3);}
-.setup-title{font-weight:700;font-size:13px;margin-bottom:4px;}
-.setup-steps{font-size:12px;color:var(--mu);line-height:2;margin-bottom:12px;}
-.setup-steps a{color:var(--bl);}
-.setup-steps code{background:var(--sf2);padding:1px 5px;border-radius:4px;font-family:var(--mn);color:var(--yw);}
-.url-row{display:flex;flex-direction:column;gap:8px;}
-.url-input{width:100%;background:var(--sf2);border:1px solid var(--bd2);border-radius:var(--rs);color:var(--tx);padding:9px 12px;font-size:13px;font-family:var(--mn);outline:none;}
-.url-input:focus{border-color:var(--gr);}
-.url-btns{display:flex;gap:8px;}
-.setup-ok{font-size:12px;color:var(--gr);margin-top:8px;}
+/* MAIN */
+.main{padding:14px 18px;}
+.wtop{margin-bottom:14px;}
+.wlbl{font-size:10px;color:var(--text3);font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:.08em;}
+.wtitle{font-size:16px;font-weight:700;margin-top:3px;line-height:1.3;}
+.wtags{display:flex;flex-wrap:wrap;gap:5px;margin-top:7px;}
+.wphase{font-size:10px;font-weight:500;padding:2px 8px;border-radius:20px;background:var(--surface2);color:var(--text2);font-family:'DM Mono',monospace;}
+.wmodel{background:#ffe8d6;color:var(--model);border:1px solid rgba(196,92,16,.25);}
+.whrs{font-size:10px;font-weight:500;padding:2px 8px;border-radius:20px;background:#ddeeff;color:var(--cad);font-family:'DM Mono',monospace;}
 
-.fx-bar{display:flex;align-items:center;justify-content:space-between;background:var(--sf);border:0.5px solid var(--bd);border-radius:var(--rs);margin-bottom:12px;padding:8px 14px;font-family:var(--mn);}
-.fx-item{display:flex;align-items:center;gap:5px;padding:0;}
+/* DAY SECTION */
+.day-section{margin-bottom:10px;}
+.day-header{display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:var(--surface2);border-radius:8px;margin-bottom:6px;}
+.day-header.weekend-sat{background:#fff8ec;border-left:3px solid #f5d08a;}
+.day-header.weekend-sun{background:#fff8ec;border-left:3px solid #f5d08a;}
+.day-name{font-size:12px;font-weight:500;}
+.day-meta{display:flex;align-items:center;gap:8px;}
+.day-hrs{font-size:10px;font-family:'DM Mono',monospace;color:var(--text2);}
+.day-prog{font-size:10px;color:var(--text3);}
+.day-tasks{display:flex;flex-direction:column;gap:6px;padding-left:4px;}
 
-.fx-lbl{font-size:11px;color:var(--mu);}
-.fx-val{font-size:11px;font-weight:600;color:var(--tx);}
-.fx-st{display:flex;align-items:center;gap:4px;font-size:11px;color:var(--mu);}
-.dot{display:inline-block;width:7px;height:7px;border-radius:50%;}
-.dot-ok{background:var(--gr);}.dot-warn{background:var(--yw);}
-.dot-spin{width:9px;height:9px;border:1.5px solid var(--bd2);border-top-color:var(--gr);border-radius:50%;animation:spin .8s linear infinite;display:inline-block;}
-@keyframes spin{to{transform:rotate(360deg);}}
+/* TASK CARD */
+.tc{background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden;transition:border-color .2s;}
+.tc.done{border-color:rgba(13,143,94,.35);background:#f0fbf6;}
+.tc-top{display:flex;align-items:center;gap:10px;padding:11px 14px;cursor:pointer;}
+.ttag{flex-shrink:0;font-size:10px;font-weight:500;padding:2px 7px;border-radius:20px;font-family:'DM Mono',monospace;min-width:54px;text-align:center;}
+.tag-cad{background:#ddeeff;color:var(--cad);}
+.tag-sku{background:#d4f5e9;color:var(--sku);}
+.tag-draw{background:#fce4ef;color:var(--draw);}
+.tag-port{background:#ece4ff;color:var(--port);}
+.tag-model{background:#ffe8d6;color:var(--model);}
+.tc-info{flex:1;min-width:0;}
+.tc-title{font-size:12px;font-weight:500;line-height:1.4;}
+.tc-hrs{font-size:10px;color:var(--text2);font-family:'DM Mono',monospace;margin-top:1px;}
+.ck{flex-shrink:0;width:24px;height:24px;border-radius:50%;border:2px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:11px;transition:all .2s;cursor:pointer;}
+.ck.done{background:var(--done);border-color:var(--done);color:#fff;}
+.tc-detail{font-size:11px;color:var(--text2);line-height:1.6;padding:0 14px 11px;border-top:1px solid var(--border);padding-top:8px;display:none;}
+.tc-detail.open{display:block;}
+.actual-row{display:flex;align-items:center;gap:8px;margin-top:8px;padding-top:8px;border-top:1px dashed var(--border);flex-wrap:wrap;}
+.actual-label{font-size:10px;color:var(--text3);font-family:'DM Mono',monospace;flex-shrink:0;}
+.actual-input{width:52px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:3px 8px;font-size:11px;font-family:'DM Mono',monospace;color:var(--text);outline:none;text-align:center;}
+.actual-input:focus{border-color:var(--text2);}
+.actual-unit{font-size:10px;color:var(--text3);font-family:'DM Mono',monospace;}
 
-.sg-top{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:9px;align-items:stretch;}
-.sg-bot{display:grid;grid-template-columns:1fr 1fr 1fr;gap:9px;margin-bottom:16px;}
-.card-big .cv{font-size:20px;letter-spacing:-.5px;white-space:nowrap;overflow:hidden;font-size:clamp(14px,4.5vw,22px);}
-@media(min-width:640px){.card-big .cv{font-size:24px;}}
-.sg-top .card{min-height:110px;display:flex;flex-direction:column;justify-content:space-between;}
-.card{background:var(--sf);border:1px solid var(--bd);border-radius:var(--r);padding:13px 14px;position:relative;overflow:hidden;}
-.card::after{display:none;}
+/* WEEK TIME SUMMARY */
+.wtime-summary{display:flex;align-items:center;gap:10px;margin:0 18px 12px;padding:10px 14px;background:var(--surface);border:1px solid var(--border);border-radius:10px;}
+.wts-item{flex:1;text-align:center;}
+.wts-val{font-size:16px;font-weight:700;font-family:'DM Mono',monospace;line-height:1;}
+.wts-lbl{font-size:10px;color:var(--text2);margin-top:2px;}
+.wts-div{width:1px;height:30px;background:var(--border);}
+.wts-over{color:var(--model);}
+.wts-ok{color:var(--done);}
 
-.cl{font-size:9px;color:var(--mu);font-family:var(--mn);text-transform:uppercase;letter-spacing:.07em;margin-bottom:4px;}
-.cv{font-size:14px;font-weight:700;font-family:var(--mn);letter-spacing:-.3px;}
-@media(min-width:640px){.cv{font-size:17px;}}
-.cs{font-size:10px;color:var(--mu);margin-top:2px;font-family:var(--mn);}
-.pos{color:var(--gr);}.neg{color:var(--rd);}
+/* CHECK ALL BTN */
+.cab{width:calc(100% - 36px);margin:0 18px 14px;padding:14px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--r);color:var(--text2);font-size:13px;font-weight:500;font-family:'Noto Sans TC',sans-serif;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:7px;transition:all .2s;}
+.cab.alldone{background:#e8f9f3;border-color:rgba(13,143,94,.4);color:var(--done);}
 
-.sec-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;gap:8px;}
-.sec-tt{font-size:11px;font-weight:600;color:var(--mu);font-family:var(--mn);text-transform:uppercase;letter-spacing:.08em;}
-.tabs{display:flex;gap:3px;background:var(--sf);border-radius:var(--rs);padding:3px;border:1px solid var(--bd);}
-.tab{padding:5px 10px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600;color:var(--mu);transition:all .15s;}
-.tab.active{background:#e5e5ea;color:#000;border:none;}
+/* REMARK */
+.remark-wrap{margin-top:10px;padding:10px 12px;background:var(--surface);border:1px solid var(--border);border-radius:10px;}
+.remark-label{font-size:10px;color:var(--text3);font-family:'DM Mono',monospace;margin-bottom:5px;letter-spacing:.04em;display:flex;align-items:center;gap:4px;}
+.remark-input{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:7px;padding:8px 10px;font-size:12px;font-family:'Noto Sans TC',sans-serif;color:var(--text);resize:none;min-height:52px;line-height:1.5;transition:border-color .2s;outline:none;}
+.remark-input:focus{border-color:var(--text2);}
+.remark-input::placeholder{color:var(--text3);}
+.remark-saved{font-size:10px;color:var(--done);margin-top:4px;height:14px;font-family:'DM Mono',monospace;opacity:0;transition:opacity .3s;}
+.remark-saved.show{opacity:1;}
 
-.hcards{display:flex;flex-direction:column;gap:9px;margin-bottom:18px;}
-.hcard{background:var(--sf);border:0.5px solid var(--bd);border-radius:var(--r);padding:12px 14px;}
-.hcard-head{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px;}
-.hcard-lft{display:flex;align-items:center;gap:8px;}
-.badge{font-size:9px;font-family:var(--mn);font-weight:500;padding:2px 6px;border-radius:4px;text-transform:uppercase;letter-spacing:.06em;}
-.badge-TW{background:#f0faf5;color:#1a9e5c;border:0.5px solid #a7e4c8;}
-.badge-US{background:#eff6ff;color:#1a6ef5;border:0.5px solid #bfdbfe;}
-.badge-JP{background:#fff8ed;color:#e68a00;border:0.5px solid #fcd9a0;}
-.hcard-sym{font-weight:700;font-family:var(--mn);font-size:15px;}
-.hcard-nm{font-size:11px;color:var(--mu);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:180px;}
-.hcard-rgt{text-align:right;min-width:0;}
-.hcard-pv{font-family:var(--mn);font-weight:600;font-size:14px;white-space:nowrap;}
-.hcard-pl{font-size:10px;color:var(--mu);font-family:var(--mn);margin-top:2px;}
-.hcard-body{display:grid;grid-template-columns:1fr 1fr;gap:4px;padding:9px 0;border-top:1px solid var(--bd);border-bottom:1px solid var(--bd);margin-bottom:10px;}
-.hstat{display:flex;flex-direction:column;gap:2px;}
-.hstat-l{font-size:10px;color:var(--mu);font-family:var(--mn);}
-.hstat-v{font-size:12px;font-family:var(--mn);font-weight:500;}
-.hpnl{display:flex;flex-direction:column;align-items:flex-end;}
-.hpnl-t{font-size:13px;font-weight:700;font-family:var(--mn);white-space:nowrap;}
-.hpnl-p{font-size:11px;font-family:var(--mn);}
-.hcard-acts{display:flex;gap:7px;}
-.hcard-history{display:none;border-top:1px solid var(--bd);margin-top:10px;padding-top:10px;}
-.hcard-history.open{display:block;}
-.htx-row{display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid var(--bd);font-family:var(--mn);font-size:12px;}
-.htx-row:last-child{border-bottom:none;}
-.htx-left{display:flex;flex-direction:column;gap:2px;}
-.htx-date{font-size:10px;color:var(--mu);}
-.htx-detail{color:var(--tx);}
-.htx-right{text-align:right;}
-.htx-cost{font-size:11px;color:var(--mu);margin-top:1px;}
-.history-toggle{font-size:11px;color:var(--mu);font-family:var(--mn);cursor:pointer;margin-top:6px;text-align:center;padding:4px;border:1px solid var(--bd);border-radius:6px;transition:all .15s;}
-.history-toggle:active{background:var(--sf2);}
-.ab{flex:1;background:#f2f2f7;border:none;border-radius:6px;color:#3c3c43;cursor:pointer;padding:8px 0;font-size:12px;font-family:var(--mn);text-align:center;transition:all .12s;}
-.ab:active{opacity:.7;}
-.ab.del{color:#d93025;}
+/* FILTER PILLS */
+.filter-bar{display:flex;gap:6px;padding:8px 18px;overflow-x:auto;scrollbar-width:none;border-bottom:1px solid var(--border);background:var(--bg);}
+.filter-bar::-webkit-scrollbar{display:none;}
+.fpill{flex-shrink:0;font-size:11px;font-weight:500;padding:4px 12px;border-radius:20px;border:1.5px solid var(--border);background:transparent;color:var(--text2);cursor:pointer;font-family:'Noto Sans TC',sans-serif;transition:all .15s;}
+.fpill:active{opacity:.7;}
+.fpill.fall{border-color:var(--text);color:var(--text);background:var(--surface2);}
+.fpill.fcad{border-color:var(--cad);color:var(--cad);background:#ddeeff;}
+.fpill.fsku{border-color:var(--sku);color:var(--sku);background:#d4f5e9;}
+.fpill.fdraw{border-color:var(--draw);color:var(--draw);background:#fce4ef;}
+.fpill.fport{border-color:var(--port);color:var(--port);background:#ece4ff;}
+.fpill.fmodel{border-color:var(--model);color:var(--model);background:#ffe8d6;}
+.day-hidden{display:none;}
+.no-task-msg{font-size:12px;color:var(--text3);text-align:center;padding:32px 0;font-family:'DM Mono',monospace;}
 
-.htable-wrap{display:none;}
-@media(min-width:768px){
-  .hcards{display:none;}
-  .htable-wrap{display:block;background:var(--sf);border:1px solid var(--bd);border-radius:var(--r);overflow:hidden;margin-bottom:18px;}
-}
-table{width:100%;border-collapse:collapse;}
-th{text-align:left;padding:10px 13px;font-size:11px;font-family:var(--mn);color:var(--mu);text-transform:uppercase;letter-spacing:.08em;border-bottom:1px solid var(--bd);font-weight:500;}
-th.r,td.r{text-align:right;}
-tbody tr{border-bottom:1px solid var(--bd);transition:background .1s;}
-tbody tr:hover{background:var(--sf2);}
-tbody tr:last-child{border-bottom:none;}
-td{padding:11px 13px;vertical-align:middle;}
-.sc{display:flex;align-items:center;gap:9px;}
-.sym{font-weight:700;font-family:var(--mn);}
-.sym-nm{font-size:11px;color:var(--mu);margin-top:1px;}
-.mn{font-family:var(--mn);}
-.pw{display:flex;flex-direction:column;align-items:flex-end;}
-.pct{font-size:11px;margin-top:1px;}
-.tab-ab{background:none;border:1px solid var(--bd);border-radius:6px;color:var(--mu);cursor:pointer;padding:4px 9px;font-size:11px;font-family:var(--mn);transition:all .15s;}
-.tab-ab.edit:hover{border-color:var(--bl);color:var(--bl);}
-.tab-ab.sell:hover{border-color:var(--gr);color:var(--gr);}
-.tab-ab.del:hover{border-color:var(--rd);color:var(--rd);}
+/* BOTTOM NAV */
+.bnav{position:fixed;bottom:0;left:0;right:0;background:var(--bg);border-top:1px solid var(--border);display:flex;padding:6px 0 calc(6px + env(safe-area-inset-bottom));}
+.ni{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:5px 0;cursor:pointer;color:var(--text3);font-size:10px;transition:color .15s;}
+.ni.active{color:var(--text);}
+.nicon{font-size:18px;}
 
-.empty{text-align:center;padding:48px 20px;color:var(--mu);font-size:13px;line-height:2.4;}
-.p-loading{color:var(--mu);font-size:12px;font-style:italic;font-family:var(--mn);}
-.p-err{color:var(--rd);font-size:12px;font-family:var(--mn);}
+/* PAGES */
+.page{display:none;padding:14px 18px;}
+.page.active{display:block;}
+#page-tracker{display:block;}
 
-.rsec{margin-bottom:18px;}
-.rtbl-wrap{background:var(--sf);border:1px solid var(--bd);border-radius:var(--r);overflow-x:auto;}
-.rtbl{width:100%;border-collapse:collapse;font-size:12px;}
-.rtbl th{text-align:left;padding:8px 11px;font-size:10px;font-family:var(--mn);color:var(--mu);text-transform:uppercase;letter-spacing:.06em;border-bottom:1px solid var(--bd);}
-.rtbl th.r,.rtbl td.r{text-align:right;}
-.rtbl td{padding:9px 11px;border-bottom:1px solid var(--bd);font-family:var(--mn);}
-.rtbl tr:last-child td{border-bottom:none;}
-.tag{display:inline-block;font-size:10px;font-family:var(--mn);padding:2px 7px;border-radius:20px;font-weight:500;}
-.tag-sell{background:rgba(248,113,113,.1);color:var(--rd);border:1px solid rgba(248,113,113,.2);}
+/* OVERVIEW */
+.ov-title{font-size:17px;font-weight:700;margin-bottom:14px;}
+.mo-sec{margin-bottom:18px;}
+.mo-lbl{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.08em;font-family:'DM Mono',monospace;margin-bottom:7px;}
+.ov-row{display:flex;align-items:center;gap:10px;padding:10px 13px;background:var(--surface);border-radius:10px;margin-bottom:5px;cursor:pointer;border:1px solid transparent;}
+.ov-row:active{border-color:var(--border);}
+.ov-num{font-size:10px;font-family:'DM Mono',monospace;color:var(--text3);width:34px;flex-shrink:0;}
+.ov-info{flex:1;}
+.ov-t{font-size:12px;font-weight:500;line-height:1.3;}
+.ov-s{font-size:10px;color:var(--text2);margin-top:2px;}
+.ov-ds{display:flex;gap:2px;flex-shrink:0;}
+.ovd{width:7px;height:7px;border-radius:50%;border:1px solid var(--border);}
+.ovd.done{background:var(--done);border-color:var(--done);}
 
-.overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);backdrop-filter:blur(4px);z-index:200;display:none;align-items:flex-end;justify-content:center;opacity:0;pointer-events:none;transition:opacity .2s;}
-@media(min-width:600px){.overlay{align-items:center;}}
-.overlay.open{opacity:1;pointer-events:all;}
-.modal{background:#fff;border:0.5px solid var(--bd);width:100%;max-width:480px;padding:20px 18px 36px;transform:translateY(40px);transition:transform .25s cubic-bezier(.32,.72,0,1);border-radius:20px 20px 0 0;max-height:92vh;overflow-y:auto;-webkit-overflow-scrolling:touch;}
-@media(min-width:600px){.modal{border-radius:18px;padding:26px;transform:translateY(20px);max-height:88vh;}}
-.overlay.open .modal{transform:translateY(0);}
-.modal-drag{width:40px;height:4px;background:var(--bd2);border-radius:2px;margin:0 auto 16px;display:block;}
-@media(min-width:600px){.modal-drag{display:none;}}
-.modal-title{font-size:17px;font-weight:700;margin-bottom:4px;}
-.modal-sub{font-size:12px;color:var(--mu);margin-bottom:18px;}
-.frow{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;}
-.frow.full{grid-template-columns:1fr;}
-.fg{display:flex;flex-direction:column;gap:5px;}
-.fg label{font-size:11px;color:var(--mu);font-family:var(--mn);text-transform:uppercase;letter-spacing:.06em;}
-.fg input,.fg select{background:var(--sf2);border:1px solid var(--bd2);border-radius:var(--rs);color:var(--tx);padding:10px 12px;font-size:15px;font-family:var(--mn);outline:none;transition:border-color .15s;width:100%;-webkit-appearance:none;}
-.fg input:focus,.fg select:focus{border-color:var(--gr);}
-.fg select option{background:var(--sf2);}
-.modal-actions{display:flex;gap:9px;justify-content:flex-end;margin-top:16px;}
-.err{color:var(--rd);font-size:12px;margin-top:6px;display:none;}
-.si{background:var(--sf2);border-radius:var(--rs);padding:12px 13px;margin-bottom:14px;font-family:var(--mn);font-size:12px;}
-.sr{display:flex;justify-content:space-between;padding:3px 0;}
-.sr span:first-child{color:var(--mu);}
-.divider{border:none;border-top:1px solid var(--bd);margin:13px 0;}
-.edit-warn{background:rgba(251,191,36,.08);border:1px solid rgba(251,191,36,.2);border-radius:var(--rs);padding:9px 12px;font-size:12px;color:var(--yw);margin-bottom:13px;line-height:1.6;}
+/* STREAK */
+.stk-big{text-align:center;padding:36px 0 24px;}
+.stk-n{font-size:68px;font-weight:700;font-family:'DM Mono',monospace;line-height:1;}
+.stk-l{font-size:13px;color:var(--text2);margin-top:6px;}
+.hm{display:grid;grid-template-columns:repeat(9,1fr);gap:4px;margin-top:20px;}
+.hc{aspect-ratio:1;border-radius:4px;background:var(--surface2);cursor:pointer;}
+.hc.h1{background:#bbeed9;}
+.hc.h2{background:#7dd8b5;}
+.hc.h3{background:#3cbf8c;}
+.hc.h4{background:var(--done);}
 
-.fab{position:fixed;bottom:22px;right:16px;z-index:100;width:54px;height:54px;border-radius:50%;background:#1c1c1e;color:#fff;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:26px;box-shadow:0 4px 18px rgba(110,231,183,.35);transition:transform .15s;}
-.fab:active{transform:scale(.91);}
-@media(min-width:600px){.fab{display:none;}}
-.add-desktop{display:none;}
-@media(min-width:600px){.add-desktop{display:inline-flex;}}
-
-@keyframes rotating{to{transform:rotate(360deg);}}
-.spin-icon{display:inline-block;animation:rotating 1s linear infinite;}
-
-/* Chart Modal */
-.chart-wrap{width:100%;overflow:hidden;}
-.chart-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:8px;}
-.chart-range{display:flex;gap:4px;}
-.chart-range-btn{background:var(--sf2);border:1px solid var(--bd);border-radius:6px;color:var(--mu);cursor:pointer;padding:4px 10px;font-size:11px;font-family:var(--mn);transition:all .15s;}
-.chart-range-btn.active{background:var(--gr);color:#0d0f14;border-color:var(--gr);font-weight:700;}
-.chart-empty{text-align:center;padding:40px 0;color:var(--mu);font-size:13px;line-height:2;}
-.chart-stat{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:14px;}
-.chart-stat-item{background:var(--sf2);border-radius:var(--rs);padding:10px;text-align:center;}
-.chart-stat-lbl{font-size:10px;color:var(--mu);font-family:var(--mn);margin-bottom:3px;}
-.chart-stat-val{font-size:13px;font-weight:700;font-family:var(--mn);}
-.card-clickable{cursor:pointer;transition:opacity .15s;}
-.card-clickable:active{opacity:.8;}
+/* TOAST */
+.toast{position:fixed;bottom:90px;left:50%;transform:translateX(-50%) translateY(16px);background:var(--surface);border:1px solid var(--border);border-radius:22px;padding:9px 18px;font-size:12px;font-weight:500;opacity:0;transition:all .3s;pointer-events:none;white-space:nowrap;z-index:200;box-shadow:0 2px 12px rgba(0,0,0,.1);}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
 </style>
 </head>
 <body>
-<div class="app">
 
-<header>
-  <div class="logo">
+<div class="hdr">
+  <div class="hdr-top">
     <div>
-      <div class="logo-text">StockLens</div>
-      <div class="logo-sub" style="display:block !important;">2026年4月8日</div>
+      <div class="app-name">Wendy ID Tracker</div>
+      <div class="app-sub" id="hdr-sub">進度追蹤</div>
+    </div>
+    <div class="wnav">
+      <button class="nbtn" onclick="chgWeek(-1)">‹</button>
+      <div class="wind" id="wind">W1</div>
+      <button class="nbtn" onclick="chgWeek(1)">›</button>
     </div>
   </div>
-  <div class="header-right">
-    <button class="btn" id="rfBtn" onclick="refreshAll()">⟳ 更新</button>
-    <button class="btn add-desktop" onclick="recalcCosts()" title="重新計算所有持股的台幣成本">⟳ 修正成本</button>
-    <button class="btn btn-primary add-desktop" onclick="openAdd()">＋ 新增持股</button>
-  </div>
-</header>
+  <div class="pbar"><div class="pfill" id="pfill" style="width:0%"></div></div>
+</div>
 
-<div class="setup-banner" id="setupBanner" style="display:none">
-  <div class="setup-title">🚀 設定 Google Apps Script 後端</div>
-  <div class="setup-steps">
-    1. 前往 <a href="https://script.google.com" target="_blank">script.google.com</a> 新增專案，貼入 <code>Code.gs</code><br>
-    2. 部署 → 網頁應用程式 → 執行身份：我，存取：所有人<br>
-    3. 複製部署網址貼到下方
+<div class="stats">
+  <div class="sc"><div class="sn" id="s-total">18</div><div class="sl">總週數</div></div>
+  <div class="sc"><div class="sn" id="s-wdone">0</div><div class="sl">完成週</div></div>
+  <div class="sc"><div class="sn" id="s-tasks">0</div><div class="sl">已打卡</div></div>
+  <div class="sc"><div class="sn" id="s-streak">0</div><div class="sl">連續天</div></div>
+</div>
+
+<div class="wdots" id="wdots"></div>
+
+<div class="filter-bar" id="filter-bar">
+  <button class="fpill fall" onclick="setFilter('all')">全部</button>
+  <button class="fpill" onclick="setFilter('cad')">AutoCAD</button>
+  <button class="fpill" onclick="setFilter('sku')">SketchUp</button>
+  <button class="fpill" onclick="setFilter('draw')">手繪</button>
+  <button class="fpill" onclick="setFilter('port')">作品集</button>
+  <button class="fpill" onclick="setFilter('model')">模型</button>
+</div>
+<div id="page-tracker">
+  <div class="main">
+    <div class="wtop">
+      <div class="wlbl" id="wlbl">Week 1</div>
+      <div class="wtitle" id="wtitle">載入中...</div>
+      <div class="wtags">
+        <span class="wphase" id="wphase"></span>
+        <span class="wphase wmodel" id="wmodel-badge" style="display:none">📦 模型週</span>
+        <span class="whrs" id="whrs-badge"></span>
+      </div>
+    </div>
+    <div id="task-list"></div>
   </div>
-  <div class="url-row">
-    <input class="url-input" id="gasUrlInput" type="url" placeholder="https://script.google.com/macros/s/.../exec">
-    <div class="url-btns">
-      <button class="btn btn-primary" style="flex:1" onclick="saveGasUrl()">儲存連線</button>
-      <button class="btn" id="clearBtn" onclick="clearGasUrl()" style="display:none">清除</button>
+  <div class="wtime-summary" id="wtime-summary">
+    <div class="wts-item">
+      <div class="wts-val" id="wts-target">—</div>
+      <div class="wts-lbl">目標時數</div>
+    </div>
+    <div class="wts-div"></div>
+    <div class="wts-item">
+      <div class="wts-val" id="wts-actual">0</div>
+      <div class="wts-lbl">實際時數</div>
+    </div>
+    <div class="wts-div"></div>
+    <div class="wts-item">
+      <div class="wts-val" id="wts-diff">—</div>
+      <div class="wts-lbl">差異</div>
     </div>
   </div>
-  <div class="setup-ok" id="setupOk" style="display:none">✅ 已連線</div>
+  <button class="cab" id="cab" onclick="checkAll()">
+    <span id="cab-icon">○</span><span id="cab-txt">本週全部打卡</span>
+  </button>
 </div>
 
-<div class="fx-bar">
-  <div style="display:flex;gap:14px;align-items:center;">
-    <div class="fx-item"><div class="fx-lbl">USD/TWD</div><div class="fx-val" id="fx-usd">－</div></div>
-    <div class="fx-item"><div class="fx-lbl">JPY/TWD</div><div class="fx-val" id="fx-jpy">－</div></div>
-  </div>
-  <div class="fx-st"><span id="fx-dot" class="dot-spin"></span><span id="fx-time">載入中</span></div>
+<!-- Overview -->
+<div class="page" id="page-overview">
+  <div class="ov-title">完整進度總覽</div>
+  <div id="ov-content"></div>
 </div>
 
-<div class="sg-top">
-  <div class="card card-big card-clickable" onclick="openChart()" style="--ct:rgba(110,231,183,.4);">
-    <div class="cl">總資產（台幣）&nbsp;↗</div>
-    <div class="cv" id="s-tv">NT$ 0</div>
-    <div class="cs" id="s-tc">0 檔持股</div>
+<!-- Streak -->
+<div class="page" id="page-streak">
+  <div class="stk-big">
+    <div class="stk-n" id="stk-n">0</div>
+    <div class="stk-l">連續打卡天數</div>
   </div>
-  <div class="card card-big" id="s-total-pnl-card">
-    <div class="cl">總損益</div>
-    <div class="cv" id="s-total-pnl">NT$ 0</div>
-    <div style="display:flex;align-items:center;gap:8px;margin-top:3px;">
-      <div class="cs" id="s-total-pnl-pct" style="font-size:12px;font-weight:700;font-family:var(--mn);">0.00%</div>
-    </div>
-  </div>
-</div>
-<div class="sg-bot">
-  <div class="card" id="s-pc">
-    <div class="cl">未實現損益</div>
-    <div class="cv" id="s-pnl">NT$ 0</div>
-    <div style="display:flex;align-items:center;gap:6px;margin-top:3px;">
-      <div class="cs" id="s-pp" style="font-size:12px;font-weight:700;font-family:var(--mn);">0.00%</div>
-    </div>
-  </div>
-  <div class="card blue">
-    <div class="cl">已實現損益</div>
-    <div class="cv" id="s-rl">NT$ 0</div>
-    <div style="display:flex;align-items:center;gap:6px;margin-top:3px;">
-      <div class="cs" id="s-rl-pct" style="font-size:12px;font-weight:700;font-family:var(--mn);">–</div>
-    </div>
-  </div>
-  <div class="card purple">
-    <div class="cl">總投入成本</div>
-    <div class="cv" id="s-ct">NT$ 0</div>
-    <div class="cs" id="s-cs">加權平均成本</div>
-  </div>
+  <div class="hm" id="hm"></div>
 </div>
 
-<div class="sec-hd">
-  <div class="sec-tt">持股明細</div>
-  <div class="tabs">
-    <div class="tab active" onclick="setTab('all',this)">全部</div>
-    <div class="tab" onclick="setTab('TW',this)">🇹🇼</div>
-    <div class="tab" onclick="setTab('US',this)">🇺🇸</div>
-    <div class="tab" onclick="setTab('JP',this)">🇯🇵</div>
-  </div>
+<div class="bnav">
+  <div class="ni active" id="nav-tracker" onclick="switchPage('tracker')"><div class="nicon">📋</div><div>本週</div></div>
+  <div class="ni" id="nav-overview" onclick="switchPage('overview')"><div class="nicon">📅</div><div>總覽</div></div>
+  <div class="ni" id="nav-streak" onclick="switchPage('streak')"><div class="nicon">🔥</div><div>連續</div></div>
 </div>
 
-<div class="hcards" id="hcards"></div>
-<div class="htable-wrap" id="htable-wrap">
-  <table>
-    <thead><tr><th>股票</th><th class="r">現價</th><th class="r">持股</th><th class="r">買入均價</th><th class="r">投入成本</th><th class="r">現值（台幣）</th><th class="r">未實現損益</th><th></th></tr></thead>
-    <tbody id="hbody"></tbody>
-  </table>
-</div>
-
-<div class="rsec" id="real-sec" style="display:none">
-  <div class="sec-hd" style="margin-bottom:10px"><div class="sec-tt">已實現交易紀錄</div></div>
-  <div class="rtbl-wrap">
-    <table class="rtbl">
-      <thead><tr><th>股票</th><th>類型</th><th class="r">股數</th><th class="r">成交價</th><th class="r">損益（台幣）</th><th class="r">日期</th></tr></thead>
-      <tbody id="rbody"></tbody>
-    </table>
-  </div>
-</div>
-
-</div>
-
-<button class="fab" onclick="openAdd()">＋</button>
-
-<div class="overlay" id="addModal">
-<div class="modal">
-  <span class="modal-drag"></span>
-  <div class="modal-title">新增持股</div>
-  <div class="modal-sub">記錄買入資訊，自動計算台幣損益</div>
-  <div class="frow">
-    <div class="fg"><label>市場</label>
-      <select id="f-mkt" onchange="onMktChange()">
-        <option value="TW">🇹🇼 台股</option>
-        <option value="US">🇺🇸 美股</option>
-        <option value="JP">🇯🇵 日股</option>
-      </select>
-    </div>
-    <div class="fg"><label>代號</label><input id="f-sym" placeholder="如：2330" oninput="this.value=this.value.toUpperCase()"></div>
-  </div>
-  <div class="frow full"><div class="fg"><label>公司名稱（選填）</label><input id="f-nm" placeholder="留空自動抓取"></div></div>
-  <div class="frow">
-    <div class="fg"><label>買入股數</label><input id="f-sh" type="number" inputmode="decimal" step="any" placeholder="0"></div>
-    <div class="fg"><label>買入單價 (<span id="f-cur">TWD</span>)</label><input id="f-pr" type="number" inputmode="decimal" step="any" placeholder="0.00"></div>
-  </div>
-  <div class="frow">
-    <div class="fg"><label>買入日期</label><input id="f-dt" type="date"></div>
-    <div class="fg"><label>匯率（留空自動）</label><input id="f-fx" type="number" inputmode="decimal" step="any" placeholder="自動抓取"></div>
-  </div>
-  <div id="add-err" class="err"></div>
-  <div class="modal-actions">
-    <button class="btn" onclick="closeModal('addModal')">取消</button>
-    <button class="btn btn-primary" onclick="addHolding()">確認買入</button>
-  </div>
-</div>
-</div>
-
-<div class="overlay" id="sellModal">
-<div class="modal">
-  <span class="modal-drag"></span>
-  <div class="modal-title">記錄賣出</div>
-  <div class="modal-sub" id="sell-sub"></div>
-  <div class="si" id="sell-info"></div>
-  <div class="frow">
-    <div class="fg"><label>賣出股數</label><input id="s-sh" type="number" inputmode="decimal" step="any" placeholder="0"></div>
-    <div class="fg"><label>賣出單價 (<span id="s-cur">TWD</span>)</label><input id="s-pr" type="number" inputmode="decimal" step="any" placeholder="0.00"></div>
-  </div>
-  <div class="frow">
-    <div class="fg"><label>賣出日期</label><input id="s-dt" type="date"></div>
-    <div class="fg"><label>匯率（留空自動）</label><input id="s-fx" type="number" inputmode="decimal" step="any" placeholder="自動抓取"></div>
-  </div>
-  <div id="sell-err" class="err"></div>
-  <div class="modal-actions">
-    <button class="btn" onclick="closeModal('sellModal')">取消</button>
-    <button class="btn btn-primary" onclick="confirmSell()">確認賣出</button>
-  </div>
-</div>
-</div>
-
-<div class="overlay" id="editModal">
-<div class="modal">
-  <span class="modal-drag"></span>
-  <div class="modal-title">編輯持股</div>
-  <div class="modal-sub" id="edit-sub"></div>
-  <div class="edit-warn">⚠️ 此操作直接覆蓋資料。追加買入請用「新增持股」以保留損益紀錄。</div>
-  <div class="frow full"><div class="fg"><label>公司名稱</label><input id="e-nm"></div></div>
-  <hr class="divider">
-  <div class="frow">
-    <div class="fg"><label>持有股數</label><input id="e-sh" type="number" inputmode="decimal" step="any"></div>
-    <div class="fg"><label>買入均價 (<span id="e-cur">TWD</span>)</label><input id="e-pr" type="number" inputmode="decimal" step="any"></div>
-  </div>
-  <div class="frow">
-    <div class="fg"><label>買入日期</label><input id="e-dt" type="date"></div>
-    <div class="fg"><label>匯率</label><input id="e-fx" type="number" inputmode="decimal" step="any" placeholder="留空自動換算"></div>
-  </div>
-  <div id="edit-err" class="err"></div>
-  <div class="modal-actions">
-    <button class="btn" onclick="closeModal('editModal')">取消</button>
-    <button class="btn btn-primary" onclick="confirmEdit()">儲存變更</button>
-  </div>
-</div>
-</div>
-
-<!-- Chart Modal -->
-<div class="overlay" id="chartModal">
-<div class="modal" style="max-width:560px;">
-  <span class="modal-drag"></span>
-  <div class="chart-header">
-    <div>
-      <div class="modal-title">資產走勢</div>
-      <div class="modal-sub" style="margin-bottom:0">每日總資產變化</div>
-    </div>
-    <div class="chart-range">
-      <button class="chart-range-btn active" onclick="setChartRange(7,this)">7天</button>
-      <button class="chart-range-btn" onclick="setChartRange(30,this)">30天</button>
-      <button class="chart-range-btn" onclick="setChartRange(90,this)">90天</button>
-      <button class="chart-range-btn" onclick="setChartRange(0,this)">全部</button>
-    </div>
-  </div>
-  <div class="chart-wrap" id="chartWrap"></div>
-  <div class="chart-stat" id="chartStat"></div>
-  <div class="modal-actions" style="margin-top:16px;">
-    <button class="btn" onclick="clearSnapshots()" style="color:var(--rd);border-color:var(--rd)">清除歷史</button>
-    <button class="btn" onclick="closeModal('chartModal')">關閉</button>
-  </div>
-</div>
-</div>
+<div class="toast" id="toast"></div>
 
 <script>
-const CUR={TW:'TWD',US:'USD',JP:'JPY'};
-const GAS_URL='https://script.google.com/macros/s/AKfycbxUO9NbXf5gduZFF0uapUzJSvegoM9dtzEi2UuVtdKtDHC_t1wujv8M1fPy41-2ziei0Q/exec';
-const ST={holdings:[],realized:[],fx:{USD_TWD:null,JPY_TWD:null},prices:{},tab:'all',sellId:null,editId:null,gasUrl:GAS_URL,fxReady:false};
+// ─── DATA ───────────────────────────────────────────────────────────────────
+// phase A = 四月 (weekends only, ~7hr/wk)
+// phase B = 五月起 (weekdays 2-3hr + weekends 6-8hr, ~22-28hr/wk)
+// Days: 六(Sat) 日(Sun) for phase A; 一三五 / 二四 / 六 / 日 for phase B
 
-function save(){
-  try{
-    localStorage.setItem('sl6_h',JSON.stringify(ST.holdings));
-    localStorage.setItem('sl6_r',JSON.stringify(ST.realized));
-  }catch(e){}
-  // 同步持股到 GAS（讓 GAS 可以每天自動快照）
-  syncHoldingsToGAS();
+const WEEKS = [
+{
+  id:0, label:"W1", dateRange:"4/13 – 4/19", phase:"四月 · 第一週", isModel:false, totalHrs:"平日零碎 + 週末約 7 hr",
+  title:"安裝軟體 · 靈感板建立 · AutoCAD 手感回來",
+  days:[
+    { day:"4/14（二）", hrs:"20-30 min", tasks:[
+      {type:"cad", title:"安裝 AutoCAD 試用版", hrs:"15 min", detail:"去 Autodesk 官網下載 AutoCAD 試用版（免費30天），安裝好後開啟，確認介面正常。同時打開 SketchUp Free（sketchup.com），登入帳號，確認兩個軟體都能用。"},
+      {type:"sku", title:"確認 SketchUp 可以開啟", hrs:"10 min", detail:"SketchUp Free 是網頁版，不需要安裝。進去後點「New Model」，看介面還記得多少，不用做任何練習。"}
+    ]},
+    { day:"4/15（三）", hrs:"20-30 min", tasks:[
+      {type:"port", title:"建立 Pinterest 靈感板", hrs:"20 min", detail:"建立一個名為「室內設計靈感」的板，開始搜尋並儲存 10 張你覺得好看的室內設計照片。不用分析，只是讓眼睛開始看設計。可以搜尋：北歐風客廳、日式臥室、工業風餐廳等關鍵字。"}
+    ]},
+    { day:"4/16（四）", hrs:"20-30 min", tasks:[
+      {type:"port", title:"繼續蒐集靈感 + 觀察共同點", hrs:"20 min", detail:"再存 10 張照片，這次開始注意：你喜歡的圖有什麼共同點？偏暖色還是冷色？木質感還是金屬感？簡潔還是豐富？在備忘錄記下 3 個你發現的自己的偏好。"}
+    ]},
+    { day:"4/17（五）", hrs:"20-30 min", tasks:[
+      {type:"port", title:"案子1 初步構想", hrs:"20 min", detail:"在手機備忘錄寫下作品集案子1的直覺想法：想做什麼空間類型、大概是什麼感覺、給誰用？不需要確定，先把腦子裡的直覺寫出來，之後週末再深化。"}
+    ]},
+    { day:"4/18（六）", hrs:"3.5 hr", tasks:[
+      {type:"cad", title:"AutoCAD 跟著教學操作", hrs:"2 hr", detail:"跟著 CAD CAM Tutorials「AutoCAD Interior Design Tutorial for Beginners」第一集開始，一定要跟著畫，不要只看。目標：Line（直線）、Offset（偏移）、Trim（修剪）這三個指令用起來不需要查。畫完一個 3×4m 的空白房間框。"},
+      {type:"sku", title:"SketchUp 空白盒子", hrs:"1.5 hr", detail:"跟著 The SketchUp Essentials 入門影片，建一個 5m×4m×2.8m 的空白盒子。重點感受：推拉工具（Push/Pull）、視角旋轉（滑鼠中鍵）、捲尺工具輸入尺寸。完成後從不同角度看看你的盒子。"}
+    ]},
+    { day:"4/19（日）", hrs:"3.5 hr", tasks:[
+      {type:"cad", title:"AutoCAD 自己重畫一遍", hrs:"2 hr", detail:"不看教學，把昨天的 AutoCAD 房間重新畫一次。卡住才查，不要邊看邊畫。這個「自己重做」的動作才是真正建立記憶的關鍵。如果畫完還有時間，試著在牆上開一個門洞（用 Arc 指令畫門弧）。"},
+      {type:"port", title:"靈感圖風格分析", hrs:"1.5 hr", detail:"從 Pinterest 靈感板挑出最喜歡的 3 張圖，各用 2-3 句話寫下為什麼喜歡：是色彩？材質？比例？光線感？這是在練習用語言描述設計感受，也是之後寫設計說明的基礎。寫完存到備忘錄。"}
+    ]}
+  ]
+},
+{
+  id:1, label:"W2", dateRange:"4/20 – 4/26", phase:"四月 · 第二週", isModel:false, totalHrs:"平日零碎 + 週末約 7 hr",
+  title:"深化靈感 · 屋主設定 · AutoCAD 加深",
+  days:[
+    { day:"4/20（一）", hrs:"20-30 min", tasks:[
+      {type:"cad", title:"預習下週 CAD 內容", hrs:"20 min", detail:"在 YouTube 搜尋「AutoCAD layers tutorial interior design」，看一支 10-15 分鐘的影片了解圖層（Layer）概念。不用跟著操作，只是先在腦子裡有印象，週末才不會生疏。"}
+    ]},
+    { day:"4/21（二）", hrs:"20-30 min", tasks:[
+      {type:"port", title:"蒐集案子1方向靈感", hrs:"20 min", detail:"根據上週末的初步構想，在 Pinterest 找 10 張更符合那個方向的參考圖。比如你想做某個風格，就搜尋更具體的關鍵字。"}
+    ]},
+    { day:"4/22（三）", hrs:"20-30 min", tasks:[
+      {type:"port", title:"案子1 屋主設定（定人三問）", hrs:"20 min", detail:"在備忘錄用「定人三問」寫出案子1的虛構屋主：① 他幾歲、做什麼工作？② 平日怎麼使用這個空間（早晨、下班後、週末）？③ 他最在乎家裡的什麼感覺？寫成 50-80 字的人物描述，這會是你所有設計決策的出發點。"}
+    ]},
+    { day:"4/23（四）", hrs:"20-30 min", tasks:[
+      {type:"port", title:"根據屋主設定精選參考圖", hrs:"20 min", detail:"回顧你的屋主描述，從靈感板裡挑出最符合那個人的生活感的 5 張圖，建立一個「案子1 核心參考」的專屬分類。這 5 張就是你的 Mood Board 核心。"}
+    ]},
+    { day:"4/24（五）", hrs:"20-30 min", tasks:[
+      {type:"port", title:"整理本週想法，準備週末", hrs:"20 min", detail:"回顧這週的備忘錄：屋主設定寫好了嗎？5 張核心參考圖選好了嗎？在備忘錄新增一條「案子1 設計方向」，用一句話寫下你的設計核心。"}
+    ]},
+    { day:"4/25（六）", hrs:"3.5 hr", tasks:[
+      {type:"cad", title:"AutoCAD 加入圖層概念", hrs:"2.5 hr", detail:"在上週的房間基礎上，學圖層（Layer）：建立「牆體」和「門窗」兩個圖層，設定不同顏色。在房間裡加入一扇門（90cm）和一扇窗（120cm），分別放在對應圖層。不用標尺寸，先感受圖層管理的邏輯。"},
+      {type:"sku", title:"SketchUp 開門洞", hrs:"1 hr", detail:"在上週的盒子上開一個門洞：在牆面上用矩形畫出門的輪廓（90cm×210cm），然後用 Push/Pull 穿透牆體。感受這個「從 2D 到 3D」的操作邏輯，這是 SketchUp 最核心的建模方式。"}
+    ]},
+    { day:"4/26（日）", hrs:"3.5 hr", tasks:[
+      {type:"port", title:"案子1 手繪配置草圖", hrs:"2 hr", detail:"拿一張 A4 白紙，根據你的屋主設定，徒手畫出案子1的初版平面配置。不需要比例尺，不需要精準，就是把腦子裡的空間想法畫出來。試 2-3 種不同的家具擺法，看哪種最符合你的設計方向。"},
+      {type:"draw", title:"靈感板整理 + 設計方向確認", hrs:"1.5 hr", detail:"把這週所有的靈感圖、屋主設定、草圖整理好，用一句話確認案子1 的設計核心方向。這句話之後會是作品集的設計說明起點。"}
+    ]}
+  ]
+},
+{
+  id:2, label:"W3", dateRange:"4/27 – 5/3", phase:"四月底 · 五月準備週", isModel:false, totalHrs:"平日 2-3 hr + 週末約 7 hr",
+  title:"五月準備 · 案例分析啟動 · CAD 圖層深化",
+  days:[
+    { day:"4/27（一）", hrs:"2-2.5 hr", tasks:[
+      {type:"cad", title:"AutoCAD 圖層系統完整設定", hrs:"1 hr", detail:"建立完整圖層體系：牆體、開口（門窗）、柱子、標註、基地、景觀。設定各圖層顏色與線型，這套圖層之後整個作品集都會用到。"},
+      {type:"port", title:"案例分析：選案開始", hrs:"1 hr", detail:"在 ArchDaily、Dezeen 找 2-3 個你喜歡的建築案子（類型不限，選讓你有感覺的）。先不分析，把案子存好，仔細看圖、讀文字，讓自己先沉浸在設計裡。記下第一眼的直覺感受。"}
+    ]},
+    { day:"4/28（二）", hrs:"2-2.5 hr", tasks:[
+      {type:"draw", title:"手繪分析圖符號：線條與箭頭", hrs:"1 hr", detail:"練習常用分析圖符號：動線箭頭（粗細代表主次）、區域泡泡（bubble diagram）、視線錐、日照方向標。每個符號畫 20 遍。"},
+      {type:"port", title:"案例分析：平面邏輯分析", hrs:"1 hr", detail:"取其中一個案子的平面圖，手繪描出來，用顏色標出：公共區域、私密區域、動線、服務空間。問自己：設計師為什麼這樣分區？"}
+    ]},
+    { day:"4/29（三）", hrs:"2-2.5 hr", tasks:[
+      {type:"cad", title:"AutoCAD 基地配置圖練習", hrs:"1 hr", detail:"找一張你喜歡的建築案子的配置圖（site plan），在 AutoCAD 中臨摹：建築量體輪廓、基地邊界、道路、景觀範圍。先練手感。"},
+      {type:"port", title:"案例分析：剖面與空間感", hrs:"1 hr", detail:"找同一個案子的剖面圖，分析：空間高度如何變化？不同區域的天花板高度差異傳達什麼感覺？手繪標出來並寫 2-3 句心得。"}
+    ]},
+    { day:"4/30（四）", hrs:"2-2.5 hr", tasks:[
+      {type:"draw", title:"手繪分析圖符號：場地與環境", hrs:"1 hr", detail:"練習基地分析常用符號：風向箭頭、日照路徑（弧線）、噪音來源（波浪線）、景觀視線（虛線）、人行流量（粗細不同的線）。"},
+      {type:"port", title:"案例分析：立面與材料分析", hrs:"1 hr", detail:"分析同一個案子的立面：建築用了哪些材料？開口的比例和節奏是什麼？手繪立面簡圖並標注材料和設計重點。"}
+    ]},
+    { day:"5/1（五）", hrs:"2-2.5 hr", tasks:[
+      {type:"port", title:"案例分析：整體設計邏輯整理", hrs:"1 hr", detail:"把這幾天分析的案子整理成一份筆記：這個設計最打動你的是什麼？設計師用了什麼手法回應基地或使用者？用 3-5 點條列，之後做自己的設計時可以參考。"},
+      {type:"draw", title:"手繪整理：本週符號速查表", hrs:"45 min", detail:"把 4/28 到今天練習的所有分析圖符號整理到一張 A4 的「分析圖符號速查表」，之後畫基地分析、案例分析都會用到，貼在桌上備用。"}
+    ]},
+    { day:"5/2（六）", hrs:"6-7 hr", tasks:[
+      {type:"port", title:"案例分析：第2個案子深度分析", hrs:"3 hr", detail:"對第2個案子做完整手繪分析：① 平面分區圖（bubble diagram）② 動線分析圖 ③ 剖面空間感素描 ④ 立面材料分析。每張圖都寫 1-2 句設計觀察。"},
+      {type:"cad", title:"AutoCAD 深化練習", hrs:"2 hr", detail:"畫一個有門有窗的完整房間，確認圖層設定正確，練習 Offset 牆厚、Arc 畫門弧、圖層切換。目標：這些動作都不需要查指令。"},
+      {type:"draw", title:"手繪符號速查表整理", hrs:"1 hr", detail:"把這週畫的分析圖符號整理到一張 A4 的「分析圖符號速查表」，之後畫基地分析、案例分析都會用到，貼在桌上備用。"}
+    ]},
+    { day:"5/3（日）", hrs:"6-7 hr", tasks:[
+      {type:"port", title:"案例分析整理成展示頁", hrs:"3 hr", detail:"把這週的案例分析整理成作品集頁面初稿：每個案子 1 頁，包含案子照片、你的分析圖（掃描或拍照）、文字重點。用 Canva 或直接手繪版面都可以。"},
+      {type:"model", title:"無機能模型材料準備", hrs:"1 hr", detail:"準備做無機能模型的材料：灰紙板（3mm和5mm各一包）、美工刀、切割墊、白膠、金屬尺。同時思考：無機能模型要探索什麼？光線？動線？高差？量體關係？先在腦子裡有個方向。"},
+      {type:"draw", title:"一點透視：建築外部空間練習", hrs:"2 hr", detail:"練習一點透視：消點設定、視平線高度（人視角約1.5m）、建築量體的基本比例。畫一個簡單的室外廣場空間。"}
+    ]}
+  ]
+},
+{
+  id:3, label:"W4", dateRange:"5/4 – 5/10", phase:"五月 · 設計發展", isModel:false, totalHrs:"約 26 hr/週",
+  title:"基地分析 · 無機能模型啟動 · 手繪分析圖練習",
+  days:[
+    { day:"週一", hrs:"2.5 hr", tasks:[
+      {type:"cad", title:"AutoCAD 基地平面圖開始", hrs:"1 hr", detail:"案子1 基地平面圖：先確定基地尺寸，在 CAD 中畫出基地邊界、道路邊線、基地內等高線（如果有）。比例設定 1:500 或 1:1000，適合呈現基地與周邊的關係。"},
+      {type:"port", title:"基地選定與資料蒐集", hrs:"1.5 hr", detail:"確定案子1 的基地（可以是真實地點或虛構，但要有清楚的地形特色）。蒐集：地圖截圖、街景照片、地形資料、周邊環境照片。用 Google Maps 街景把基地周邊走一遍，記下你觀察到的：人流、車流、景觀、噪音、鄰棟建築。"}
+    ]},
+    { day:"週二", hrs:"2.5 hr", tasks:[
+      {type:"draw", title:"手繪基地分析圖（一）", hrs:"1.5 hr", detail:"手繪基地分析圖：① N向標示 ② 日照路徑（夏至/冬至的太陽角度）③ 主要風向 ④ 周邊道路和人行流線。用色鉛筆或麥克筆分色標示不同資訊，讓圖面清晰易讀。"},
+      {type:"port", title:"基地分析：周邊環境調查", hrs:"1 hr", detail:"分析基地周邊：① 鄰棟建築的高度和性質 ② 主要景觀視線方向 ③ 噪音來源 ④ 進出基地的可能位置。寫成條列式筆記，之後轉化成分析圖。"}
+    ]},
+    { day:"週三", hrs:"2.5 hr", tasks:[
+      {type:"cad", title:"AutoCAD 基地配置圖深化", hrs:"1 hr", detail:"在 CAD 基地圖上加入：周邊道路標示、鄰棟建築輪廓（灰色填充）、基地內主要等高線、可能的建築配置區域（虛線框出）。"},
+      {type:"port", title:"基地分析：限制與機會整理", hrs:"1.5 hr", detail:"根據這幾天的觀察，整理出基地的「限制」和「機會」各 5 點。例如：限制——南側緊鄰高樓遮蔽日照；機會——北面有山景視野。這個分析會直接影響你的設計決策。"}
+    ]},
+    { day:"週四", hrs:"2.5 hr", tasks:[
+      {type:"draw", title:"手繪基地分析圖（二）：視線與動線", hrs:"1.5 hr", detail:"畫第二張基地分析圖：① 從基地向外的景觀視線（哪個方向最好？）② 人流從哪裡進來？③ 車流和停車邏輯 ④ 你設想的主要入口位置。用不同顏色區分不同資訊層。"},
+      {type:"model", title:"無機能模型啟動：探索量體關係", hrs:"1 hr", detail:"開始做無機能模型。裁幾個不同大小的紙板塊，在底板上試著排列：高低差怎麼產生有趣的空間？量體之間的縫隙能創造什麼？不要有預設答案，純粹玩。"}
+    ]},
+    { day:"週五", hrs:"2 hr", tasks:[
+      {type:"draw", title:"手繪整理", hrs:"45 min", detail:"整理這週的基地分析手繪，確認每張圖都有：N向標示、比例尺（或大概尺寸）、圖例說明。這些是分析圖的基本要素。"},
+      {type:"cad", title:"CAD 整理本週圖檔", hrs:"1 hr", detail:"整理 CAD 基地圖，確認比例設定正確，圖層清晰。存好備份。"}
+    ]},
+    { day:"週六", hrs:"6-7 hr", tasks:[
+      {type:"model", title:"無機能模型：深化探索", hrs:"3 hr", detail:"把上週的排列試驗繼續發展：選一個最有感覺的量體關係，嘗試做得更精確一點。開始思考：這個空間關係如果變成一個建築，它會是什麼感覺？光線從哪裡進來？人在裡面怎麼移動？"},
+      {type:"cad", title:"AutoCAD 建築平面圖概念練習", hrs:"2 hr", detail:"找一個你分析過的案子，臨摹它的一層平面圖（選最有設計感的一層）。練習建築平面的畫法：柱子用實心方塊、牆體用雙線、樓梯用標準畫法。"},
+      {type:"draw", title:"一點透視：建築外部空間", hrs:"1 hr", detail:"用一點透視畫一個建築外部廣場或入口空間，加入建築量體、地面鋪面、人的比例（1.7m）、樹木。"}
+    ]},
+    { day:"週日", hrs:"6-7 hr", tasks:[
+      {type:"port", title:"基地分析整理成展示頁", hrs:"3 hr", detail:"把基地分析整理成作品集頁面：① 基地位置圖（衛星圖或地圖）② 周邊環境照片 ③ 手繪分析圖（日照、風向、動線、視線）④ 限制與機會條列。Canva 排版，這頁是作品集的第二部分。"},
+      {type:"model", title:"無機能模型拍照記錄", hrs:"1.5 hr", detail:"把這週的無機能模型用手機拍照（白底、自然光、多角度），記錄每一個試驗的版本。不要只留最後一版，過程的試驗照片本身就是作品集的好素材。"},
+      {type:"draw", title:"室內透視練習：空間尺度感", hrs:"1.5 hr", detail:"畫一個有高度變化的室內空間（例如挑高客廳）的一點透視圖，重點練習：不同高度的天花板在透視圖裡的表現，以及高挑空間給人的感受如何透過線條傳達。"}
+    ]}
+  ]
+},
+{
+  id:3, label:"W5", dateRange:"5/11 – 5/17", phase:"五月 · 設計發展", isModel:true, totalHrs:"約 28 hr/週",
+  title:"無機能模型完成 · 概念確立 · 手繪概念草圖 ＋ 模型週",
+  days:[
+    { day:"週一", hrs:"2.5 hr", tasks:[
+      {type:"cad", title:"AutoCAD 剖面圖練習", hrs:"1 hr", detail:"學建築剖面圖的畫法：從平面圖延伸出剖切線，畫出被切到的牆（實填）和看到的空間（虛線輪廓）。練習題：畫一個有一樓和二樓的簡單建築剖面，標示樓板高度。"},
+      {type:"port", title:"概念發展：從模型找設計語言", hrs:"1.5 hr", detail:"回顧這兩週的無機能模型照片，問自己：哪個空間關係讓你最有感覺？那個感覺是什麼——是壓縮後的釋放？是光線的戲劇性？是高低差帶來的張力？用文字寫下來，這就是你的設計概念雛形。"}
+    ]},
+    { day:"週二", hrs:"2.5 hr", tasks:[
+      {type:"draw", title:"手繪概念草圖（一）：空間序列", hrs:"1.5 hr", detail:"把你找到的設計概念用圖畫出來：人從入口進來，會經歷什麼空間序列？先窄後寬？先暗後亮？先低後高？用一系列的剖面草圖畫出這個「空間體驗的劇本」。"},
+      {type:"port", title:"概念確立：設計主題一句話", hrs:"1 hr", detail:"嘗試用一句話描述你的設計概念，例如：「透過光線和地形的對話，創造一個讓聲音和自然共鳴的場所」。這句話要能回答：你的設計在做什麼？為什麼這樣做？"}
+    ]},
+    { day:"週三", hrs:"2.5 hr", tasks:[
+      {type:"cad", title:"AutoCAD 配置圖：建築量體初稿", hrs:"1 hr", detail:"把概念草圖轉化到 CAD 配置圖上：在基地圖裡畫出建築量體的初步位置和大小。先確認量體與基地的關係合理：離道路的距離、建蔽率是否合理。"},
+      {type:"port", title:"概念深化：機能配置草圖", hrs:"1.5 hr", detail:"把設計概念轉化成機能配置：案子1 需要哪些空間？各空間的大小比例如何？哪些空間需要靠近？哪些需要隔開？用 bubble diagram（大小不同的圓圈代表空間，連線代表關聯性）畫出來。"}
+    ]},
+    { day:"週四", hrs:"2.5 hr", tasks:[
+      {type:"draw", title:"手繪概念草圖（二）：量體與地形", hrs:"1.5 hr", detail:"畫出建築量體與基地地形的關係草圖：建築怎麼落在地上？是順應地形、切入地形、還是懸浮在地形上？從剖面角度畫出這個關係，這是建築設計的核心決策之一。"},
+      {type:"model", title:"概念模型啟動：從無機能到有機能", hrs:"1 hr", detail:"開始做第一個概念模型：把機能配置的想法做成立體的，不需要精確，用小紙板做出各空間量體的大致尺寸和位置關係，放在基地模型上看整體感。"}
+    ]},
+    { day:"週五", hrs:"2 hr", tasks:[
+      {type:"draw", title:"手繪整理", hrs:"45 min", detail:"整理這週的概念草圖，挑出最能說明你設計想法的 3 張，這些之後會進作品集的「設計過程」頁面。"},
+      {type:"cad", title:"CAD 整理", hrs:"1 hr", detail:"整理 CAD 配置圖，確認基地比例正確，建築量體位置合理。"}
+    ]},
+    { day:"週六", hrs:"7-8 hr", tasks:[
+      {type:"model", title:"模型：概念模型深化完成", hrs:"6 hr", detail:"把概念模型做得更精確：① 確認各空間量體的大小比例 ② 開口（門窗）的位置 ③ 室外空間的位置 ④ 主要動線。完成後拍照（多角度、不同視點），記錄設計決策。"},
+      {type:"draw", title:"手繪：室外空間透視草圖", hrs:"1.5 hr", detail:"畫一張從人的視角看建築入口的透視草圖。建築外部空間的透視圖是作品集的重要頁面，現在開始練習。重點：建築量體的比例感、人的尺度（1.7m）、天空和地面的關係。"}
+    ]},
+    { day:"週日", hrs:"6-7 hr", tasks:[
+      {type:"port", title:"概念設計整理成展示頁", hrs:"3 hr", detail:"把概念設計整理成作品集頁面：① 設計概念說明（文字＋概念圖）② 機能配置 bubble diagram ③ 概念模型照片 ④ 概念草圖掃描。這是作品集裡說明「你的設計在想什麼」的核心部分。"},
+      {type:"draw", title:"兩點透視練習：建築量體", hrs:"2 hr", detail:"用兩點透視畫建築量體（不是室內空間）。建築外觀的兩點透視比室內更強調量體感和材料質感。練習畫一個簡單的L型量體建築，加入人和樹木的比例。"},
+      {type:"model", title:"模型拍照記錄整理", hrs:"1 hr", detail:"把無機能模型和概念模型的所有照片整理到資料夾，標注每張照片是哪個試驗版本、探索什麼問題。這些照片之後都有機會進作品集。"}
+    ]}
+  ]
+},
+{
+  id:4, label:"W6", dateRange:"5/18 – 5/24", phase:"五月 · 設計發展", isModel:false, totalHrs:"約 26 hr/週",
+  title:"初版平面發展 · CAD 建築圖面 · 手繪剖面透視",
+  days:[
+    { day:"週一", hrs:"2.5 hr", tasks:[
+      {type:"cad", title:"AutoCAD 一層平面圖開始", hrs:"1.5 hr", detail:"把概念模型的空間配置轉化成 CAD 平面圖。從一樓開始：畫牆體（外牆30cm、內牆15cm）、柱子、主要開口位置。先畫出大格局，細節下週補。比例用 1:200 或 1:100。"},
+      {type:"port", title:"五月設計進度自我評估", hrs:"1 hr", detail:"回顧這個月的進展：案例分析完成了嗎？基地分析完成了嗎？無機能模型完成了嗎？設計概念確立了嗎？列出還缺什麼，補齊後才能進入六月的圖面深化階段。"}
+    ]},
+    { day:"週二", hrs:"2.5 hr", tasks:[
+      {type:"draw", title:"手繪剖面透視（section perspective）", hrs:"1.5 hr", detail:"Section perspective 是建築作品集最常見的圖種之一：從剖面角度切開建築，同時畫出剖面的線條和透視的空間感。練習：畫一個簡單的剖面透視，表現空間的高低差和光線進入的方式。"},
+      {type:"port", title:"案子1 平面配置草圖修訂", hrs:"1 hr", detail:"根據 CAD 圖的繪製過程，重新審視平面配置：走道是否足夠寬（公共走道通常≥180cm）？各空間的比例是否合理？動線是否流暢？做必要的調整。"}
+    ]},
+    { day:"週三", hrs:"2.5 hr", tasks:[
+      {type:"cad", title:"AutoCAD 一層平面圖深化", hrs:"1.5 hr", detail:"在平面圖裡加入：門的開啟方向、窗的位置、樓梯（如有）、主要室內分隔牆。開始標注房間名稱（用文字標注，先不標尺寸）。"},
+      {type:"port", title:"室內尺度設計啟動", hrs:"1 hr", detail:"建築平面確定後，選一個最重要的室內空間，開始思考室內設計：天花板高度？材料選擇？自然光如何進入？家具如何配置？這是作品集B版的素材。"}
+    ]},
+    { day:"週四", hrs:"2.5 hr", tasks:[
+      {type:"draw", title:"手繪室內立面圖練習", hrs:"1.5 hr", detail:"畫你選定的重要室內空間的立面圖：選一面最有設計感的牆，畫出它的立面（含門窗位置、材質分層、天花板線）。室內立面是建築設計和室內設計作品集都需要的圖，現在開始練。"},
+      {type:"model", title:"室內尺度概念模型", hrs:"1 hr", detail:"用紙板做一個室內空間的小模型（比例可以用1:50）：選你設計的最重要室內空間，做出四面牆、天花板（可以移除）、地板，感受這個空間在立體中的感覺。"}
+    ]},
+    { day:"週五", hrs:"2 hr", tasks:[
+      {type:"draw", title:"五月手繪總整理", hrs:"1 hr", detail:"整理整個五月的手繪：分析圖符號表、基地分析圖、概念草圖、空間序列草圖、透視圖練習。拍照記錄，感受一個月的進步。挑出最能代表你設計思考的 5 張，這些是作品集的珍貴素材。"},
+      {type:"cad", title:"五月 CAD 總整理", hrs:"1 hr", detail:"整理五月 CAD 圖：基地圖、配置圖初稿、一樓平面圖初稿。確認圖層命名一致，存好備份。"}
+    ]},
+    { day:"週六", hrs:"6-7 hr", tasks:[
+      {type:"cad", title:"AutoCAD 二層或屋頂平面圖", hrs:"2.5 hr", detail:"如果設計有多層，開始畫二層平面；如果是單層，畫屋頂平面（roof plan）：標示屋頂排水、天窗位置、設備位置等。"},
+      {type:"draw", title:"建築外觀透視草圖", hrs:"2 hr", detail:"畫 2 張建築外觀的手繪透視圖：一張從主要入口方向，一張從最能表現設計特色的角度。加入環境元素（地形、植栽、人的比例）。這兩張草圖之後可能直接進作品集。"},
+      {type:"port", title:"作品集整體結構規劃", hrs:"1.5 hr", detail:"規劃整本作品集 A（建築版）的頁面結構：① 封面 ② 案例分析（2-3頁）③ 基地分析（1-2頁）④ 設計概念（1-2頁）⑤ 設計發展模型（1-2頁）⑥ 圖面（配置、平面、剖面、立面）（3-4頁）⑦ 室內空間（1-2頁）⑧ 外觀透視＋結語（1頁）。共約 12-16 頁。"}
+    ]},
+    { day:"週日", hrs:"5-6 hr", tasks:[
+      {type:"port", title:"作品集草稿：前半部整理", hrs:"3 hr", detail:"把已完成的素材開始整理進 Canva：案例分析頁、基地分析頁、設計概念頁、設計發展（模型照片）頁。先做內容，版面之後再精修。"},
+      {type:"draw", title:"剖面透視完整練習", hrs:"2 hr", detail:"完成一張完整的 section perspective：從剖面切開你的設計，畫出剖到的牆（實線）和看到的室內空間（透視）、人的尺度、光線進入的方式。這是建築作品集最有說服力的圖種之一。"}
+    ]}
+  ]
+},
+{  id:5, label:"W7", dateRange:"5/25 – 6/1", phase:"六月 · 圖面深化", isModel:false, totalHrs:"約 26 hr/週",
+  title:"CAD 全套圖面 · SketchUp 建模啟動 · 立面透視練習",
+  days:[
+    { day:"週一", hrs:"2.5 hr", tasks:[
+      {type:"cad", title:"AutoCAD 建築剖面圖正式開始", hrs:"1.5 hr", detail:"選最能說明設計概念的剖切位置，畫正式剖面圖：被剖到的牆用粗實線，看到的空間用細線。標示各層樓板高度、天花板高度、主要空間名稱。"},
+      {type:"sku", title:"SketchUp 建模啟動：基地模型", hrs:"1 hr", detail:"SketchUp 從這週開始正式使用。先建基地模型：畫出基地輪廓（從 CAD 匯入DWG），加入地形高差，感受基地的三維地形。"}
+    ]},
+    { day:"週二", hrs:"2.5 hr", tasks:[
+      {type:"draw", title:"手繪建築外立面練習", hrs:"1.5 hr", detail:"練習建築外立面的手繪：選建築主要立面，畫出建築輪廓、開口位置、材料分層。加入地面線和人的比例（1.7m）做尺度參照。"},
+      {type:"port", title:"案子1 平面圖尺寸標註", hrs:"1 hr", detail:"在 CAD 平面圖上加入完整尺寸標註：總長總寬、各空間尺寸、開口位置尺寸。建築尺寸通常標到軸線（柱子中心線）。"}
+    ]},
+    { day:"週三", hrs:"2.5 hr", tasks:[
+      {type:"cad", title:"AutoCAD 建築立面圖", hrs:"1.5 hr", detail:"畫建築正立面圖：從平面圖延伸出立面線，標示建築高度、各層樓板線、開口位置和大小、屋頂線條。加入地面線（GL線）。"},
+      {type:"sku", title:"SketchUp 建築量體建模", hrs:"1 hr", detail:"把建築量體的基本形體建入 SketchUp：從 CAD 平面圖匯入，描出建築輪廓，用 Push/Pull 拉出各層高度。先做基本量體。"}
+    ]},
+    { day:"週四", hrs:"2.5 hr", tasks:[
+      {type:"draw", title:"手繪室內空間透視（加材質）", hrs:"1.5 hr", detail:"選案子1 最重要的室內空間，畫一張完整的透視圖：加入天花板設計、牆面材質紋路、家具、燈光效果（用淡影表現）。目標達到可以放進作品集的水準。"},
+      {type:"port", title:"室內空間設計深化", hrs:"1 hr", detail:"深化最重要室內空間的設計：天花板高度確定、材料選擇（3種以內）、主要家具配置、燈光計畫。用手繪草圖記錄這些決策。"}
+    ]},
+    { day:"週五", hrs:"2 hr", tasks:[
+      {type:"draw", title:"手繪整理", hrs:"45 min", detail:"整理這週的立面圖和透視圖練習，評估：建築立面的比例是否正確？室內透視的尺度感是否準確？"},
+      {type:"cad", title:"CAD 整理：圖面統一格式", hrs:"1 hr", detail:"統一所有 CAD 圖面的格式：圖層命名、線型粗細、文字樣式、標題欄。建立一個標準圖框模板。"}
+    ]},
+    { day:"週六", hrs:"6-7 hr", tasks:[
+      {type:"cad", title:"CAD 配置圖完整版（site plan）", hrs:"2.5 hr", detail:"完成建築配置圖：建築量體、周邊道路、基地邊界、景觀規劃（樹木、廣場、戶外空間）、入口位置。配置圖要能說明建築與基地環境的整體關係。"},
+      {type:"sku", title:"SketchUp 建模：開口與細節", hrs:"2 hr", detail:"在 SketchUp 量體模型上加入：開口（門窗洞口）、陽台或露台、屋頂形式、主要結構元素。開始套入基本材質。"},
+      {type:"draw", title:"建築外觀手繪：加入材質表現", hrs:"1.5 hr", detail:"重畫建築外觀透視草圖，這次加入材質質感：木材條紋、清水混凝土的粗糙感、玻璃的反射。這是建築手繪的重要技巧。"}
+    ]},
+    { day:"週日", hrs:"5-6 hr", tasks:[
+      {type:"port", title:"作品集圖面頁製作", hrs:"3 hr", detail:"把 CAD 圖面匯出 PDF，放進 Canva 排版：配置圖頁、平面圖頁、剖面圖頁、立面圖頁。圖面頁面要乾淨清晰，比例尺一定要標示。"},
+      {type:"sku", title:"SketchUp 截圖輸出練習", hrs:"2 hr", detail:"從 SketchUp 輸出多角度截圖：鳥瞰角度（45度俯角）、人視角（1.7m高）、入口正面視角、室內主要空間視角。調整 Shadow 設定找到最好的光影效果。"}
+    ]}
+  ]
+},
+{
+  id:6, label:"W8", dateRange:"6/2 – 6/8", phase:"六月 · 圖面深化", isModel:true, totalHrs:"約 28 hr/週",
+  title:"CAD 全套圖面完成 · SketchUp 深化 · 設計模型週",
+  days:[
+    { day:"週一", hrs:"2.5 hr", tasks:[
+      {type:"cad", title:"AutoCAD 第二剖面圖", hrs:"1.5 hr", detail:"畫第二個方向的剖面圖（通常是與第一張剖面垂直的方向）。兩張剖面加在一起，能完整說明建築的空間關係和高度變化。"},
+      {type:"sku", title:"SketchUp 室內空間建模", hrs:"1 hr", detail:"選最重要的室內空間，在 SketchUp 裡做出室內細部：天花板造型、地板材質、主要家具、燈具位置。這個室內模型截圖會是作品集B版的核心素材。"}
+    ]},
+    { day:"週二", hrs:"2.5 hr", tasks:[
+      {type:"draw", title:"手繪剖面圖加上人與空間感", hrs:"1.5 hr", detail:"手繪建築剖面圖：加入人（站立的人影）做尺度參照、家具輪廓、用深淺不同的填色表現不同空間的明暗感。有人影的剖面圖比沒有的更有說服力。"},
+      {type:"port", title:"室內設計詳圖：重要空間細節", hrs:"1 hr", detail:"選一個室內設計的重點細節（特殊天花板、訂製書架或工作台、樓梯細部），畫出詳圖（1:20或1:10）。詳圖是證明你有思考到施工層面的重要素材。"}
+    ]},
+    { day:"週三", hrs:"2.5 hr", tasks:[
+      {type:"cad", title:"AutoCAD 建築側立面圖", hrs:"1.5 hr", detail:"畫建築側立面（與正立面垂直的那面），完成後建築就有兩個方向的立面圖。選擇最有設計特色的側面。"},
+      {type:"sku", title:"SketchUp 材質細化", hrs:"1 hr", detail:"為 SketchUp 模型換上更精確的材質貼圖：上網找真實的建築材料紋路圖（磚牆、清水混凝土、木材、金屬板），匯入 SketchUp 替換預設材質。"}
+    ]},
+    { day:"週四", hrs:"2.5 hr", tasks:[
+      {type:"draw", title:"室內立面手繪：完整版", hrs:"1.5 hr", detail:"完成案子1 最重要室內空間的立面手繪：材質表現、開口細節、燈具位置、家具輪廓。加入尺寸標注和材料說明引線。"},
+      {type:"port", title:"材料板製作", hrs:"1 hr", detail:"製作案子1 的材料板：外部材料（外牆主要材料1-2種）和內部材料（室內主要材料2-3種）。用 Canva 拼成一張圖，標注材料名稱和選用理由（一句話就好）。"}
+    ]},
+    { day:"週五", hrs:"2 hr", tasks:[
+      {type:"draw", title:"手繪整理", hrs:"45 min", detail:"整理本週手繪，確認剖面圖和立面圖的比例正確，人的比例（1.7m）是否一致。"},
+      {type:"cad", title:"六月圖面進度確認", hrs:"1 hr", detail:"確認六月 CAD 圖面完成狀況：配置圖、各層平面圖、2張剖面圖、2個方向立面圖。缺的補上，下週進入修整。"}
+    ]},
+    { day:"週六", hrs:"5 hr", tasks:[
+      {type:"cad", title:"CAD 配置圖打印作為模型底稿", hrs:"2 hr", detail:"把 CAD 配置圖以 1:200 或 1:500 比例印出，作為設計發展模型的底稿。確認比例正確。"},
+      {type:"model", title:"設計發展模型製作開始", hrs:"3 hr", detail:"這個月的模型是「設計發展模型」，比五月的概念模型更精確：按照 CAD 平面圖的實際比例，裁出各建築量體、做出地形高差。目標：完成基地底板和建築主要量體結構。"}
+    ]},
+    { day:"週日", hrs:"7-8 hr", tasks:[
+      {type:"model", title:"設計發展模型：細部完成＋拍照", hrs:"6 hr", detail:"完成設計發展模型：加入開口（門窗剪影）、室外空間元素（廣場地面、植栽以紙棒代替）、各層樓板。從多角度拍照：鳥瞰、人視角、入口視角，找出最能表現設計概念的角度。"},
+      {type:"port", title:"作品集：模型展示頁製作", hrs:"1.5 hr", detail:"把設計發展模型的照片整理進 Canva，做成模型展示頁：不同角度的模型照片、搭配設計概念文字說明。"}
+    ]}
+  ]
+},
+{
+  id:7, label:"W9", dateRange:"6/9 – 6/15", phase:"六月 · 圖面深化", isModel:false, totalHrs:"約 26 hr/週",
+  title:"圖面精修 · SketchUp 完善 · 透視圖完稿",
+  days:[
+    { day:"週一", hrs:"2.5 hr", tasks:[
+      {type:"cad", title:"CAD 全套圖面精修", hrs:"1.5 hr", detail:"逐一檢查所有 CAD 圖面：線型粗細是否統一（外牆輪廓最粗、室內隔間次之、標註線最細）？比例尺是否標示？圖名是否完整？統一用同一個圖框模板輸出。"},
+      {type:"sku", title:"SketchUp 最終截圖輸出", hrs:"1 hr", detail:"輸出 SketchUp 最終截圖：鳥瞰、主入口視角、最重要室內空間視角、設計特色角度。每張截圖都要調整好 Shadow 和相機角度，輸出高解析度 JPG（至少 2000px 寬）。"}
+    ]},
+    { day:"週二", hrs:"2.5 hr", tasks:[
+      {type:"draw", title:"建築外觀透視：完稿版", hrs:"1.5 hr", detail:"完成一張建築外觀的手繪透視完稿，達到可以直接掃描放進作品集的水準。用代針筆畫輪廓線（0.5mm），材質紋路用較細的筆（0.1mm），最後用色鉛筆做局部上色。"},
+      {type:"port", title:"案子2 選題思考", hrs:"1 hr", detail:"開始思考案子2 的題目。問自己：有沒有讓你覺得「這個空間可以做得更好」的地方？或者生活中有什麼空間體驗讓你印象深刻？把想到的都記下來。"}
+    ]},
+    { day:"週三", hrs:"2.5 hr", tasks:[
+      {type:"cad", title:"室內詳圖：CAD 版本", hrs:"1.5 hr", detail:"把你之前手繪的室內詳圖轉成 CAD 版本：用更精確的比例（1:20或1:10）畫出天花板設計、特殊牆面處理、樓梯細部或訂製家具。這張圖兩份作品集都會用到。"},
+      {type:"sku", title:"SketchUp 算圖嘗試", hrs:"1 hr", detail:"嘗試 Enscape（有試用版）或 SketchUp 內建的 Ambient Occlusion 輸出，看看算圖效果是否比截圖更適合你的設計風格。"}
+    ]},
+    { day:"週四", hrs:"2.5 hr", tasks:[
+      {type:"draw", title:"室內空間透視：完稿版", hrs:"1.5 hr", detail:"完成一張室內空間的手繪透視完稿，達到可以掃描進作品集的水準。重點：材質質感（木紋、磚面、金屬）、光影表現、家具陳設、人的尺度。"},
+      {type:"port", title:"作品集A 整體審視", hrs:"1 hr", detail:"把作品集A 目前的所有頁面打印出來或在大螢幕上全部排開看：整體視覺是否一致？有沒有資訊量太多或太少的頁面？哪個頁面最弱？記下來。"}
+    ]},
+    { day:"週五", hrs:"2 hr", tasks:[
+      {type:"draw", title:"手繪整理：六月全回顧", hrs:"1 hr", detail:"整理六月所有手繪：分析圖、概念草圖、建築透視、室內透視、立面圖。按類型分類存好，挑出準備進作品集的那幾張。"},
+      {type:"cad", title:"六月 CAD 圖面全部輸出", hrs:"1 hr", detail:"把所有 CAD 圖面出 PDF，建立「案子1圖面包」資料夾，分類存好：配置圖、平面圖、剖面圖、立面圖、詳圖。"}
+    ]},
+    { day:"週六", hrs:"6-7 hr", tasks:[
+      {type:"port", title:"作品集A 大幅修整", hrs:"3 hr", detail:"根據週四的審視筆記，修整最弱的 2-3 頁。讓整本的視覺語言統一：字型最多用 2-3 種、配色要呼應你的設計主題、圖面和手繪的呈現方式要一致。"},
+      {type:"draw", title:"剖面透視：完稿版", hrs:"2 hr", detail:"完成一張 section perspective 完稿：這是建築作品集裡最有說服力的圖種。被剖到的牆用粗線（可以塗黑或深灰），透視空間用細線，加入人影尺度、光線進入方式、室內空間感。"},
+      {type:"sku", title:"SketchUp 最終模型存檔", hrs:"1 hr", detail:"SketchUp 模型做最後整理：Tag 分層清楚、場景設定（Scene）存好各個視角、材質確認完整。存檔後備份到雲端。"}
+    ]},
+    { day:"週日", hrs:"5-6 hr", tasks:[
+      {type:"port", title:"作品集A 完稿衝刺", hrs:"4 hr", detail:"這天的目標是讓作品集A 達到「可以給人看」的水準。封面、案例分析、基地分析、設計概念、圖面、室內空間、外觀透視，每一頁都要有內容。"},
+      {type:"draw", title:"自由手繪練習", hrs:"1.5 hr", detail:"不設主題，隨手畫你腦海中覺得有意思的空間或場景。讓手繪回到享受的狀態。"}
+    ]}
+  ]
+},
+{
+  id:8, label:"W10", dateRange:"6/16 – 6/22", phase:"六月 · 收尾", isModel:false, totalHrs:"約 24 hr/週",
+  title:"作品集A 初稿完成 · 案子2 選題 · 作品集B 規劃",
+  days:[
+    { day:"週一", hrs:"2.5 hr", tasks:[
+      {type:"cad", title:"室內施工圖概念補強", hrs:"1.5 hr", detail:"室內設計版作品集需要施工圖概念。學習：天花板平面圖（RCP）的畫法、室內立面圖的標準標注方式（材料引線、高度標示）。畫一張重要室內空間的 RCP。"},
+      {type:"port", title:"案子2 選題確定", hrs:"1 hr", detail:"這週要確定案子2 的題目方向。評估：① 你對這個空間類型有感覺嗎？② 和案子1 有沒有互補？③ 資料好找嗎？把想法記下來，下週開始案例分析。"}
+    ]},
+    { day:"週二", hrs:"2.5 hr", tasks:[
+      {type:"draw", title:"計時手繪練習：20分鐘空間草圖", hrs:"1.5 hr", detail:"面試常見情境：面試官給你一個空間條件，讓你當場畫出平面草圖或透視草圖。計時20分鐘，完成一個簡單空間的平面圖＋透視草圖。在時間限制內把重要資訊畫清楚，不求完美。"},
+      {type:"port", title:"作品集A：請人看並收集意見", hrs:"1 hr", detail:"把作品集A 的初稿 PDF 傳給 1-2 個人看。問他們：① 看完之後對這個設計的印象是什麼？② 哪頁最弱？③ 有沒有看不懂的地方？記下意見。"}
+    ]},
+    { day:"週三", hrs:"2.5 hr", tasks:[
+      {type:"cad", title:"根據意見修整 CAD 圖面", hrs:"1.5 hr", detail:"根據收到的意見，修整 CAD 圖面中最需要改善的部分，確認標注完整清晰。"},
+      {type:"port", title:"根據意見修整作品集A", hrs:"1 hr", detail:"處理最明顯的問題。原則：只改有道理的建議，不要因為一個人的主觀偏好就大幅修改設計方向。重點修整視覺效果和清晰度。"}
+    ]},
+    { day:"週四", hrs:"2.5 hr", tasks:[
+      {type:"draw", title:"室內立面手繪：速度提升練習", hrs:"1.5 hr", detail:"計時練習：30分鐘內完成一個室內空間最重要牆面的立面手繪（含材質表現和基本標注）。練習讓手繪速度和品質同步提升。"},
+      {type:"port", title:"作品集B（室內版）規劃", hrs:"1 hr", detail:"規劃作品集B 的結構：從作品集A 裡抽取室內尺度的部分（室內平面、室內立面、室內透視、材料板），再補上 RCP 和施工圖概念。作品集B 約 8-10 頁，聚焦室內設計能力的展現。"}
+    ]},
+    { day:"週五", hrs:"2 hr", tasks:[
+      {type:"draw", title:"手繪整理", hrs:"45 min", detail:"整理本週手繪，評估計時練習的表現：速度和品質之間的平衡如何？"},
+      {type:"port", title:"六月作品集進度確認", hrs:"1 hr", detail:"確認六月目標達成狀況：① 作品集A 初稿完成 ✓ ② 全套 CAD 圖面完成 ✓ ③ SketchUp 模型完成 ✓ ④ 手繪透視完稿 2-3 張 ✓ ⑤ 案子2 選題確定 ✓。缺的部分補上。"}
+    ]},
+    { day:"週六", hrs:"6-7 hr", tasks:[
+      {type:"port", title:"作品集A 最終修整", hrs:"3 hr", detail:"作品集A 最終版：統一字型和排版細節、確認所有圖面有比例尺和圖名、封面做到有設計感、輸出最終 PDF（每頁 300dpi）。作品集A 正式完成！"},
+      {type:"draw", title:"建築外觀透視：不同風格嘗試", hrs:"2 hr", detail:"同一個建築，用不同的手繪風格畫兩張透視圖：一張線條乾淨精準風、一張速寫草圖風。感受哪個風格更適合你的設計特色，以後統一用那個風格。"},
+      {type:"sku", title:"SketchUp 案子2 基地初探", hrs:"1 hr", detail:"如果案子2 選題已確定，在 SketchUp 建一個超簡單的基地模型（只有地形輪廓），感受這個基地的三維空間感。"}
+    ]},
+    { day:"週日", hrs:"5-6 hr", tasks:[
+      {type:"port", title:"作品集B 初稿開始", hrs:"3 hr", detail:"把作品集A 的室內相關頁面複製到新的 Canva 專案，調整為室內設計的視角：把建築說明的篇幅縮短，室內平面、立面、透視、材料板的篇幅拉長。加入 RCP 頁面。"},
+      {type:"draw", title:"自由手繪", hrs:"2 hr", detail:"不設目標，隨心畫。讓手繪回到享受的狀態。"}
+    ]}
+  ]
+},
+{
+  id:9, label:"W11", dateRange:"6/23 – 6/29", phase:"七月 · 作品集完成", isModel:false, totalHrs:"約 24 hr/週",
+  title:"作品集B 深化 · 案子2 案例分析啟動 · 手繪加強",
+  days:[
+    { day:"週一", hrs:"2.5 hr", tasks:[
+      {type:"cad", title:"室內施工圖補強", hrs:"1.5 hr", detail:"為作品集B 補強室內施工圖概念：完成重要室內空間的天花板圖（RCP）、補強室內立面標注（材料引線要完整）。這些圖是室內設計公司會特別看的。"},
+      {type:"port", title:"案子2 案例分析啟動", hrs:"1 hr", detail:"開始案子2 的案例分析：在 ArchDaily 或 Dezeen 找 2 個對應類型的案子，存好資料，仔細看。記下第一眼的感受和你最想深入分析的面向。"}
+    ]},
+    { day:"週二", hrs:"2.5 hr", tasks:[
+      {type:"draw", title:"案子2 案例分析手繪", hrs:"1.5 hr", detail:"對案子2 的案例做手繪分析：平面分區圖、動線圖、剖面空間感素描。這次應該比五月第一週做的更快、更有深度，因為你已經有兩個月的練習。"},
+      {type:"port", title:"作品集B：室內空間深化", hrs:"1 hr", detail:"深化作品集B 的室內設計頁面：確認室內平面圖（含家具配置和尺寸）、室內立面圖（2面）、室內透視圖（1-2張）、材料板、RCP 都完整。"}
+    ]},
+    { day:"週三", hrs:"2.5 hr", tasks:[
+      {type:"cad", title:"案子2 基地配置圖開始", hrs:"1.5 hr", detail:"案子2 基地確定後，在 CAD 畫基地輪廓和周邊環境。比五月快很多，因為你已經熟悉這個流程了。"},
+      {type:"port", title:"履歷整合規劃", hrs:"1 hr", detail:"開始規劃履歷：技能列表（AutoCAD、SketchUp、手繪、Canva、模型製作）、教育背景、相關經歷。履歷要和作品集風格一致（字型、配色呼應）。"}
+    ]},
+    { day:"週四", hrs:"2.5 hr", tasks:[
+      {type:"draw", title:"面試手繪模擬", hrs:"1.5 hr", detail:"模擬面試情境：給自己一個空間條件，計時20分鐘，畫出平面配置草圖＋一張透視草圖。反覆練習，讓這個動作變得自然。"},
+      {type:"port", title:"作品集B 初稿完成", hrs:"1 hr", detail:"作品集B 所有頁面都要有內容，達到「初稿完成」的狀態。輸出 PDF 自己看一遍，記下需要修整的地方。"}
+    ]},
+    { day:"週五", hrs:"2 hr", tasks:[
+      {type:"draw", title:"手繪整理", hrs:"45 min", detail:"整理本週手繪，面試模擬的速度和品質是否進步？"},
+      {type:"cad", title:"CAD 整理", hrs:"1 hr", detail:"整理 CAD 檔案，確認案子1 和案子2 的圖面都分類存好。"}
+    ]},
+    { day:"週六", hrs:"6-7 hr", tasks:[
+      {type:"port", title:"作品集B 精修", hrs:"3 hr", detail:"作品集B 詳細修整：室內設計的說明文字要更注重材料細節和空間體驗描述、確認 RCP 和立面標注完整、整體排版視覺乾淨清晰。"},
+      {type:"draw", title:"室內透視：上色完稿", hrs:"2 hr", detail:"完成一張用麥克筆或色鉛筆上色的室內透視圖完稿。上色不要全覆蓋，用「局部上色」的方式（只對重點材料上色，其餘留線稿）——這種風格看起來更專業，也更快。"},
+      {type:"sku", title:"案子2 SketchUp 基地模型", hrs:"1 hr", detail:"建立案子2 的 SketchUp 基地模型，加入地形和周邊環境概念。"}
+    ]},
+    { day:"週日", hrs:"5-6 hr", tasks:[
+      {type:"port", title:"兩份作品集並排審視", hrs:"3 hr", detail:"把作品集A 和B 並排看：① 兩份有沒有明顯的設計能力差異？② A版能清楚說明建築設計思考嗎？③ B版能清楚展示室內設計能力嗎？④ 兩份的視覺風格是否一致？記下問題。"},
+      {type:"draw", title:"自由手繪", hrs:"2 hr", detail:"自由練習，享受手繪。"}
+    ]}
+  ]
+},
+{
+  id:10, label:"W12", dateRange:"6/30 – 7/6", phase:"七月 · 案子2發展", isModel:true, totalHrs:"約 26 hr/週",
+  title:"案子2 設計發展 · 作品集收尾 ＋ 模型週",
+  days:[
+    { day:"週一", hrs:"2.5 hr", tasks:[
+      {type:"cad", title:"案子2 平面圖發展", hrs:"1.5 hr", detail:"案子2 的基地和概念確定後，開始畫平面圖。流程和案子1 一樣，但這次應該更快：先畫量體配置，再細化各層平面。"},
+      {type:"port", title:"案子2 設計概念確立", hrs:"1 hr", detail:"用「定人三問」或類似方式確定案子2 的設計出發點，寫出設計概念一句話。確保案子2 和案子1 的概念不要太像，兩個案子要能展現你不同面向的設計思考。"}
+    ]},
+    { day:"週二", hrs:"2.5 hr", tasks:[
+      {type:"draw", title:"案子2 概念手繪草圖", hrs:"1.5 hr", detail:"畫案子2 的設計概念草圖：空間序列、量體與基地關係、主要設計手法。你現在的手繪速度和品質都比五月好，這次的草圖應該更清晰、更有說服力。"},
+      {type:"port", title:"作品集A＋B 最終版確認", hrs:"1 hr", detail:"兩份作品集最後確認：在不同螢幕（手機、電腦、平板）各看一遍，確認文字清晰可讀、圖片解析度夠高。輸出最終版 PDF 存好。"}
+    ]},
+    { day:"週三", hrs:"2.5 hr", tasks:[
+      {type:"cad", title:"案子2 剖面＋立面草圖", hrs:"1.5 hr", detail:"案子2 的剖面和立面圖先用草圖版本，確認空間高度和立面比例合理。"},
+      {type:"port", title:"履歷完成", hrs:"1 hr", detail:"完成履歷：一頁 A4、清楚說明技能（手繪、AutoCAD、SketchUp、模型製作、Canva）、學習經歷、轉職動機（用正面的方式說明）。"}
+    ]},
+    { day:"週四", hrs:"2.5 hr", tasks:[
+      {type:"draw", title:"面試手繪模擬：加快速度", hrs:"1.5 hr", detail:"計時15分鐘完成一個空間的平面草圖，再5分鐘補透視草圖。目標是讓這個動作更自然、更快，同時維持清晰度。"},
+      {type:"port", title:"投遞目標清單建立", hrs:"1 hr", detail:"在 104 找出 10-15 家你想投的公司（建築事務所＋室內設計公司都列），依照喜好排優先順序，記下各公司的設計風格特色。"}
+    ]},
+    { day:"週五", hrs:"2 hr", tasks:[
+      {type:"draw", title:"手繪整理", hrs:"45 min", detail:"整理本週手繪。"},
+      {type:"cad", title:"案子2 圖面進度確認", hrs:"1 hr", detail:"確認案子2 目前進度，規劃下週需要完成的圖面。"}
+    ]},
+    { day:"週六", hrs:"5 hr", tasks:[
+      {type:"cad", title:"案子2 配置圖打印", hrs:"2 hr", detail:"把案子2 CAD 配置圖以適當比例印出，作為模型的底稿。"},
+      {type:"model", title:"案子2 模型製作開始", hrs:"3 hr", detail:"案子2 的概念模型：按照配置圖的比例裁出基地底板、做出主要量體。這次模型製作應該比案子1 更有效率，因為流程已經熟悉了。"}
+    ]},
+    { day:"週日", hrs:"7-8 hr", tasks:[
+      {type:"model", title:"案子2 模型：完成＋拍照", hrs:"6 hr", detail:"完成案子2 模型，加入室外空間元素，從多角度拍照。特別注意：拍出能表現設計概念的角度，讓照片說明設計想法。"},
+      {type:"port", title:"開始積極投遞", hrs:"1.5 hr", detail:"作品集 A 和 B 都完成後，開始向前三順位的目標公司投遞。信件要客製化：提到你對那家公司哪個作品有感覺、你的背景如何和他們契合。"}
+    ]}
+  ]
+},
+{
+  id:11, label:"W13", dateRange:"7/7 – 7/13", phase:"七月 · 求職", isModel:false, totalHrs:"約 22 hr/週",
+  title:"案子2 圖面完成 · 積極投遞 · 面試準備",
+  days:[
+    { day:"週一", hrs:"2.5 hr", tasks:[
+      {type:"cad", title:"案子2 全套圖面完成", hrs:"1.5 hr", detail:"衝刺完成案子2 所有圖面：配置圖、各層平面、2張剖面、2個方向立面。圖面不用像案子1 那麼精修，達到清晰可讀即可。"},
+      {type:"port", title:"持續投遞", hrs:"1 hr", detail:"每天投 2-3 家，每封信都客製化。"}
+    ]},
+    { day:"週二", hrs:"2.5 hr", tasks:[
+      {type:"draw", title:"手繪：面試模擬訓練", hrs:"1.5 hr", detail:"這週的手繪重點是面試準備：練習在陌生人面前徒手畫平面草圖（可以請朋友看著你畫），習慣邊說明邊畫的節奏。"},
+      {type:"sku", title:"案子2 SketchUp 建模", hrs:"1 hr", detail:"用 SketchUp 建案子2 的基本模型，輸出幾個角度的截圖作為作品集素材。"}
+    ]},
+    { day:"週三", hrs:"2.5 hr", tasks:[
+      {type:"cad", title:"維持 CAD 手感", hrs:"1 hr", detail:"畫一個新的空間保持手感，或是把案子2 圖面補強細節。"},
+      {type:"port", title:"面試準備：自我介紹練習", hrs:"1.5 hr", detail:"準備 2 分鐘的自我介紹（口頭版）：說明你的背景、為何轉職、你做了什麼準備、你的兩個作品集各自說明什麼設計思考。錄音聽回放，反覆練習到流暢自然。"}
+    ]},
+    { day:"週四", hrs:"2.5 hr", tasks:[
+      {type:"draw", title:"手繪維持練習", hrs:"1 hr", detail:"每週至少 3 張草圖保持手感。"},
+      {type:"port", title:"面試準備：作品集口頭說明", hrs:"1.5 hr", detail:"練習用 5 分鐘口頭說明你的作品集：設計概念是什麼、你做了哪些分析和研究、設計決策的理由是什麼。這比「帶著作品集讓對方自己看」更有說服力。"}
+    ]},
+    { day:"週五", hrs:"2 hr", tasks:[
+      {type:"draw", title:"手繪整理", hrs:"45 min", detail:"整理本週手繪。"},
+      {type:"port", title:"投遞追蹤", hrs:"1 hr", detail:"整理投遞記錄，確認是否需要跟進。"}
+    ]},
+    { day:"週六", hrs:"6-7 hr", tasks:[
+      {type:"port", title:"案子2 加入作品集", hrs:"3 hr", detail:"把案子2 的案例分析、基地分析、設計概念、圖面、模型照片整合進作品集A 和B。更新輸出最終 PDF。"},
+      {type:"draw", title:"建築透視精進練習", hrs:"2 hr", detail:"這週的手繪重點是提升速度：計時30分鐘完成一張有材質表現的建築外觀透視圖。"},
+      {type:"sku", title:"SketchUp 自由練習", hrs:"1 hr", detail:"自由建模，維持手感。"}
+    ]},
+    { day:"週日", hrs:"5-6 hr", tasks:[
+      {type:"port", title:"求職策略檢視＋深度面試準備", hrs:"3 hr", detail:"回顧：投了幾家？有幾家有回音？根據狀況調整策略。同時深化面試準備：研究有面試通知的公司，準備針對性的說明。"},
+      {type:"draw", title:"自由手繪", hrs:"2 hr", detail:"不設壓力，享受手繪。"}
+    ]}
+  ]
+},
+{
+  id:12, label:"W14", dateRange:"7/14 – 7/20", phase:"七月 · 收尾", isModel:false, totalHrs:"約 20 hr/週",
+  title:"全力求職 · 技能維持 · 保持節奏",
+  days:[
+    { day:"週一", hrs:"2 hr", tasks:[
+      {type:"cad", title:"CAD 維持練習", hrs:"1 hr", detail:"每週至少 1-2hr 維持手感。可以練習更快速完成圖面，或是學習 Revit 基礎（如果有餘力，Revit 對建築事務所求職有加分）。"},
+      {type:"port", title:"持續投遞", hrs:"1 hr", detail:"繼續向目標公司投遞，每週至少 5-8 家。每封信都提到對那家公司的具體了解。"}
+    ]},
+    { day:"週二", hrs:"2 hr", tasks:[
+      {type:"draw", title:"面試手繪維持", hrs:"1 hr", detail:"每週至少做一次面試手繪模擬，保持「在壓力下快速畫圖」的狀態。"},
+      {type:"port", title:"面試準備", hrs:"1 hr", detail:"如果已有面試通知，深度研究那家公司：他們的代表作是什麼？設計風格是什麼？你想在面試中說什麼？"}
+    ]},
+    { day:"週三", hrs:"2 hr", tasks:[
+      {type:"cad", title:"技能維持", hrs:"1 hr", detail:"維持練習。"},
+      {type:"sku", title:"SketchUp 維持", hrs:"1 hr", detail:"維持建模手感。"}
+    ]},
+    { day:"週四", hrs:"2 hr", tasks:[
+      {type:"draw", title:"手繪維持", hrs:"1 hr", detail:"保持每週手繪習慣。"},
+      {type:"port", title:"求職追蹤", hrs:"1 hr", detail:"整理投遞狀態，跟進未回應的公司。"}
+    ]},
+    { day:"週五", hrs:"1.5 hr", tasks:[
+      {type:"port", title:"本週求職回顧", hrs:"1 hr", detail:"這週投了幾家？有沒有面試？根據狀況調整下週策略。保持積極心態，轉職是一個過程。"},
+      {type:"draw", title:"手繪整理", hrs:"30 min", detail:"整理本週手繪。"}
+    ]},
+    { day:"週六", hrs:"5-6 hr", tasks:[
+      {type:"port", title:"深度求職準備", hrs:"3 hr", detail:"研究目標公司、模擬面試、更新投遞清單。如果作品集有任何需要更新的地方，這個時間修整。"},
+      {type:"draw", title:"建築透視練習", hrs:"1.5 hr", detail:"維持手繪能力。"},
+      {type:"sku", title:"自由建模", hrs:"1 hr", detail:"維持 SketchUp 手感，嘗試新的空間類型。"}
+    ]},
+    { day:"週日", hrs:"4-5 hr", tasks:[
+      {type:"port", title:"面試模擬全套練習", hrs:"2.5 hr", detail:"完整模擬一次面試：自我介紹2分鐘→作品集說明5分鐘→回答常見問題（為何轉職？設計理念？對公司哪個作品有感覺？）。可以請朋友幫忙模擬。"},
+      {type:"draw", title:"自由手繪", hrs:"1.5 hr", detail:"享受手繪，不設壓力。"}
+    ]}
+  ]
+},
+{
+  id:13, label:"W15+", dateRange:"8/1 起", phase:"八月+ · 全力求職", isModel:false, totalHrs:"維持約 15-18 hr/週",
+  title:"持續求職 · 技能維持 · 保持設計敏感度",
+  days:[
+    { day:"每週一三", hrs:"各 2 hr", tasks:[
+      {type:"cad", title:"CAD＋SketchUp 維持", hrs:"1 hr", detail:"每週維持 2-3hr 軟體練習，保持手感。有餘力可以開始學 Revit 基礎，對建築事務所求職有明顯加分。"},
+      {type:"port", title:"積極投遞", hrs:"1 hr", detail:"持續向目標公司投遞，每週 5-10 家。根據面試回饋調整策略。"}
+    ]},
+    { day:"每週二四", hrs:"各 1.5 hr", tasks:[
+      {type:"draw", title:"手繪維持＋面試模擬", hrs:"45 min", detail:"每週 2-3 張草圖保持手感，重點練習面試情境：邊說明邊畫、快速平面草圖、建築外觀透視。"},
+      {type:"port", title:"面試準備＋追蹤", hrs:"1 hr", detail:"針對有面試通知的公司深度準備，同時追蹤已投遞的狀態。"}
+    ]},
+    { day:"週六", hrs:"4-5 hr", tasks:[
+      {type:"port", title:"求職衝刺", hrs:"2.5 hr", detail:"研究公司、模擬面試、更新投遞。如果面試多了，把時間集中在最有可能的機會上。"},
+      {type:"draw", title:"手繪練習", hrs:"1 hr", detail:"維持手感。"},
+      {type:"sku", title:"自由建模", hrs:"1 hr", detail:"維持技術，探索新的建模方式。"}
+    ]},
+    { day:"週日", hrs:"3-4 hr", tasks:[
+      {type:"port", title:"求職策略週回顧", hrs:"1.5 hr", detail:"每週回顧：投了幾家？有幾家有回音？哪個類型的公司最有反應？根據資料調整策略。"},
+      {type:"draw", title:"自由手繪", hrs:"1.5 hr", detail:"維持設計敏感度，享受手繪。"}
+    ]}
+  ]
 }
-async function syncHoldingsToGAS(){
-  if(!ST.gasUrl||!ST.holdings.length)return;
-  try{
-    const form=new FormData();
-    form.append('action','syncHoldings');
-    form.append('holdings',JSON.stringify(ST.holdings.map(h=>({
-      symbol:h.symbol,market:h.market,shares:h.shares,costTWD:h.costTWD,avgPrice:h.avgPrice
-    }))));
-    await fetch(ST.gasUrl,{method:'POST',body:form});
-  }catch(e){console.log('sync error:',e.message);}
-}
+];
+
+const TAG_MAP={cad:"CAD",sku:"Sketch",draw:"手繪",port:"作品集",model:"模型"};
+const TAG_CLS={cad:"tag-cad",sku:"tag-sku",draw:"tag-draw",port:"tag-port",model:"tag-model"};
+
+let curWeek=0, curPage='tracker', data={}, checkDates=[], remarks={}, actuals={}, curFilter='all';
+
 function load(){
-  try{
-    let h=localStorage.getItem('sl6_h');
-    let r=localStorage.getItem('sl6_r');
-    if(!h)h=localStorage.getItem('sl5_h');
-    if(!r)r=localStorage.getItem('sl5_r');
-    ST.holdings=JSON.parse(h||'[]');
-    ST.realized=JSON.parse(r||'[]');
-    ST.gasUrl=localStorage.getItem('sl6_gas')||localStorage.getItem('sl5_gas')||GAS_URL;
-    ST.holdings.forEach((h,i)=>{if(!h.id)h.id=String(Date.now()+i);});
-  }catch(e){ST.holdings=[];ST.realized=[];}
+  try{const r=localStorage.getItem('idtrk2');if(r){const p=JSON.parse(r);data=p.d||{};checkDates=p.c||[];remarks=p.r||{};actuals=p.a||{};}}catch(e){}
+}
+function save(){
+  try{localStorage.setItem('idtrk2',JSON.stringify({d:data,c:checkDates,r:remarks,a:actuals}));}catch(e){}
+}
+function key(w,d,t){return `w${w}d${d}t${t}`;}
+function isDone(w,d,t){return data[key(w,d,t)]===true;}
+function totalTasks(wIdx){return WEEKS[wIdx].days.reduce((s,d)=>s+d.tasks.length,0);}
+function doneTasks(wIdx){return WEEKS[wIdx].days.reduce((s,d,di)=>s+d.tasks.filter((_,ti)=>isDone(wIdx,di,ti)).length,0);}
+
+function toggle(wIdx,dIdx,tIdx){
+  const k=key(wIdx,dIdx,tIdx);
+  data[k]=!data[k];
+  const today=new Date().toDateString();
+  if(data[k]&&!checkDates.includes(today))checkDates.push(today);
+  save();
+  renderWeek(wIdx);
+  updateStats();
+  updateDots();
 }
 
-function saveGasUrl(){
-  const url=document.getElementById('gasUrlInput').value.trim();
-  if(!url.includes('script.google.com/macros/s/')){alert('請貼入正確的 GAS 部署網址');return;}
-  ST.gasUrl=url;localStorage.setItem('sl6_gas',url);updateBanner();refreshAll();
-}
-function clearGasUrl(){ST.gasUrl='';localStorage.removeItem('sl6_gas');document.getElementById('gasUrlInput').value='';document.getElementById('gasUrlInput').disabled=false;updateBanner();renderAll();}
-function updateBanner(){
-  const ok=!!ST.gasUrl;
-  document.getElementById('setupBanner').className='setup-banner'+(ok?' done':'');
-  document.getElementById('setupOk').style.display=ok?'block':'none';
-  document.getElementById('clearBtn').style.display=ok?'':'none';
-  const inp=document.getElementById('gasUrlInput');
-  if(ok){inp.value=ST.gasUrl.slice(0,52)+'...';inp.disabled=true;}
-  else{inp.value='';inp.disabled=false;}
-}
-
-// 原始穩定版：POST + FormData
-async function gasCall(params){
-  if(!ST.gasUrl)return null;
-  try{
-    const form=new FormData();
-    Object.entries(params).forEach(([k,v])=>form.append(k,v));
-    const r=await fetch(ST.gasUrl,{method:'POST',body:form});
-    return r.json();
-  }catch(e){
-    console.warn('GAS error:',e.message);
-    return null;
-  }
+function checkAll(){
+  const w=WEEKS[curWeek];
+  const total=totalTasks(curWeek);
+  const done=doneTasks(curWeek);
+  const allDone=done===total;
+  const today=new Date().toDateString();
+  w.days.forEach((d,di)=>d.tasks.forEach((_,ti)=>{data[key(curWeek,di,ti)]=!allDone;}));
+  if(!allDone&&!checkDates.includes(today))checkDates.push(today);
+  save();
+  renderWeek(curWeek);
+  updateStats();
+  updateDots();
+  showToast(allDone?"已取消本週打卡":"🎉 本週全部完成！");
 }
 
-async function fetchFX(){
-  if(!ST.gasUrl){
-    try{const d=await(await fetch('https://api.frankfurter.app/latest?from=USD&to=TWD,JPY')).json();ST.fx.USD_TWD=d.rates.TWD;ST.fx.JPY_TWD=d.rates.TWD/d.rates.JPY;setFXBar(false);}
-    catch(e){ST.fx.USD_TWD=32.5;ST.fx.JPY_TWD=0.217;setFXBar(true);}
-    return;
-  }
-  try{
-    const d=await gasCall({action:'fx'});
-    if(d?.USD_TWD){ST.fx.USD_TWD=d.USD_TWD;ST.fx.JPY_TWD=d.JPY_TWD;setFXBar(false);ST.fxReady=true;}
-    else{ST.fx.USD_TWD=32.5;ST.fx.JPY_TWD=0.217;setFXBar(true);ST.fxReady=false;}
-  }catch(e){ST.fx.USD_TWD=32.5;ST.fx.JPY_TWD=0.217;setFXBar(true);ST.fxReady=false;}
-}
-function setFXBar(fb){
-  document.getElementById('fx-usd').textContent=ST.fx.USD_TWD?.toFixed(2)||'－';
-  document.getElementById('fx-jpy').textContent=ST.fx.JPY_TWD?.toFixed(4)||'－';
-  const dot=document.getElementById('fx-dot');dot.className='dot '+(fb?'dot-warn':'dot-ok');dot.textContent='';
-  document.getElementById('fx-time').textContent=fb?'備用':'已更新';
-}
-function toTWD(p,m){
-  if(m==='TW')return p;
-  if(m==='US')return p*(ST.fx.USD_TWD||32.5);
-  if(m==='JP')return p*(ST.fx.JPY_TWD||0.217);
-  return p;
+function setFilter(f){
+  curFilter=f;
+  // update pill styles
+  document.querySelectorAll('.fpill').forEach(p=>p.className='fpill');
+  const map={all:'fall',cad:'fcad',sku:'fsku',draw:'fdraw',port:'fport',model:'fmodel'};
+  const btn=document.querySelector(`.fpill[onclick="setFilter('${f}')"]`);
+  if(btn) btn.classList.add(map[f]||'fall');
+  renderWeek(curWeek);
 }
 
-async function fetchQuotes(){
-  if(!ST.gasUrl||!ST.holdings.length)return;
-  ST.holdings.forEach(h=>{ST.prices[h.symbol+'|'+h.market]={status:'loading'};});
-  renderHoldings();
-  try{
-    const d=await gasCall({action:'quotes',symbols:ST.holdings.map(h=>h.symbol+'|'+h.market).join(',')});
-    if(d?.quotes){
-      d.quotes.forEach(q=>{
-        const h=ST.holdings.find(x=>x.symbol===q.symbol&&x.market===q.market);
-        const key=q.symbol+'|'+q.market;
-        if(q.ok&&q.price!=null){ST.prices[key]={price:q.price,name:q.name,status:'ok'};if(h&&!h.name&&q.name)h.name=q.name;}
-        else ST.prices[key]={status:'error'};
-      });
-    }else ST.holdings.forEach(h=>{ST.prices[h.symbol+'|'+h.market]={status:'error'};});
-  }catch(e){ST.holdings.forEach(h=>{ST.prices[h.symbol+'|'+h.market]={status:'error'};});}
-  save();renderAll();
-}
+function renderWeek(wIdx){
+  const w=WEEKS[wIdx];
+  document.getElementById('wlbl').textContent=w.dateRange||w.label;
+  document.getElementById('wtitle').textContent=w.title;
+  document.getElementById('wphase').textContent=w.phase;
+  document.getElementById('wmodel-badge').style.display=w.isModel?'inline-block':'none';
+  document.getElementById('whrs-badge').textContent='🕐 '+w.totalHrs;
+  document.getElementById('wind').textContent=w.label;
+  document.getElementById('hdr-sub').textContent=w.label+' · '+w.phase;
 
-async function refreshAll(){
-  const btn=document.getElementById('rfBtn');
-  btn.innerHTML='<span class="spin-icon">⟳</span>';btn.disabled=true;
-  await fetchFX();await fetchQuotes();renderAll();
-  btn.innerHTML='⟳ 更新';btn.disabled=false;
-}
+  const list=document.getElementById('task-list');
+  list.innerHTML='';
 
-// 公司名稱縮寫
-const NAME_MAP = {
-  'TAIWAN SEMICONDUCTOR': 'TSM',
-  'TAIWAN SEMICONDUCTOR MANUFACTURING': 'TSM',
-  'TAIWAN SEMICONDUCTOR MANUFACTUR': 'TSM',
-  'APPLE': 'Apple',
-  'MICROSOFT': 'Microsoft',
-  'NVIDIA': 'NVIDIA',
-  'AMAZON': 'Amazon',
-  'ALPHABET': 'Alphabet',
-  'META PLATFORMS': 'Meta',
-  'TESLA': 'Tesla',
-  'SANDISK': 'SanDisk',
-  'MICRON TECHNOLOGY': 'Micron',
-  'YUANTA': 'Yuanta',
-  'MIPOX': 'Mipox',
-  'WIN SEMICONDUCTORS': 'WIN Semi',
-  'TOWER SEMICONDUCTOR': 'Tower Semi',
-  'APPLIED OPTOELECTRONICS': 'AAOI',
-};
-function shortName(name) {
-  if (!name) return '';
-  const upper = name.toUpperCase();
-  for (const [key, val] of Object.entries(NAME_MAP)) {
-    if (upper.includes(key)) return val;
-  }
-  // 超過 20 字就截斷
-  return name.length > 20 ? name.slice(0, 18) + '…' : name;
-}
+  let anyVisible=false;
 
-function fmt(n,d=0){if(n==null||isNaN(n))return'－';return n.toLocaleString('zh-TW',{minimumFractionDigits:d,maximumFractionDigits:d});}
-function fmtNT(n){if(n==null||isNaN(n))return'－';return(n>=0?'NT$ ':'-NT$ ')+fmt(Math.abs(n));}
-function cls(n){return n>0?'pos':n<0?'neg':'';}
-function renderAll(){renderSummary();renderHoldings();renderRealized();}
+  w.days.forEach((day,di)=>{
+    const filteredTasks=curFilter==='all'?day.tasks:day.tasks.filter(t=>t.type===curFilter);
+    if(filteredTasks.length===0) return; // skip whole day section
+    anyVisible=true;
 
-function renderSummary(){
-  // 有非台股持股且匯率未就緒時，仍繼續計算但只用台股部分
-  // 不再 return，改為在計算時跳過無匯率的股票
-  let tv=0,tc=0,has=false;
-  ST.holdings.forEach(h=>{
-    const p=ST.prices[h.symbol+'|'+h.market];
-    // 台股不需匯率，美股/日股需要匯率才能換算
-    const canCalc = h.market==='TW' || ST.fxReady;
-    if(p?.price!=null && canCalc){tv+=toTWD(p.price,h.market)*h.shares;has=true;}
-    tc+=h.costTWD;
-  });
-  const pnl=has?tv-tc:null,pct=tc>0&&pnl!=null?(pnl/tc*100):null;
-  const rt=ST.realized.reduce((s,r)=>s+(r.pnlTWD||0),0);
+    const dayDone=filteredTasks.filter((_,ri)=>{
+      const ti=curFilter==='all'?ri:day.tasks.indexOf(filteredTasks[ri]);
+      return isDone(wIdx,di,ti);
+    }).length;
+    const dayTotal=filteredTasks.length;
 
-  document.getElementById('s-tv').textContent=has?fmtNT(tv):'NT$ –';
-  document.getElementById('s-tc').textContent=ST.holdings.length+' 檔持股';
-
-  document.getElementById('s-pnl').textContent=pnl!=null?fmtNT(pnl):'NT$ –';
-  document.getElementById('s-pnl').className='cv '+(pnl!=null?cls(pnl):'');
-  document.getElementById('s-pp').textContent=pct!=null?(pct>=0?'+':'')+pct.toFixed(2)+'%':'–';
-  document.getElementById('s-pp').className='cs '+cls(pct);
-  document.getElementById('s-pc').className='card';
-
-  document.getElementById('s-rl').textContent=fmtNT(rt);
-  document.getElementById('s-rl').className='cv '+cls(rt);
-  const rtPct=tc>0?(rt/tc*100):null;
-  document.getElementById('s-rl-pct').textContent=rtPct!=null?(rtPct>=0?'+':'')+rtPct.toFixed(2)+'%':'–';
-  document.getElementById('s-rl-pct').className='cs '+cls(rt);
-
-  document.getElementById('s-ct').textContent=fmtNT(tc);
-  document.getElementById('s-cs').textContent=pct!=null?`平均報酬 ${pct>=0?'+':''}${pct.toFixed(2)}%`:'尚無報價';
-
-  const totalPnl=(pnl||0)+rt;
-  const totalPnlPct=tc>0?(totalPnl/tc*100):null;
-  document.getElementById('s-total-pnl').textContent=tc>0?fmtNT(totalPnl):'NT$ –';
-  document.getElementById('s-total-pnl').className='cv '+cls(totalPnl);
-  document.getElementById('s-total-pnl-pct').textContent=totalPnlPct!=null?(totalPnlPct>=0?'+':'')+totalPnlPct.toFixed(2)+'%':'–';
-  document.getElementById('s-total-pnl-pct').className='cs '+cls(totalPnlPct);
-  document.getElementById('s-total-pnl-card').className='card card-big';
-}
-
-function list(){return ST.tab==='all'?ST.holdings:ST.holdings.filter(h=>h.market===ST.tab);}
-
-function getPriceDisplay(h){
-  const key=h.symbol+'|'+h.market,p=ST.prices[key],cur=CUR[h.market];
-  if(!ST.gasUrl)return{html:`<span style="color:var(--mu);font-size:12px">請設定 GAS</span>`,price:null};
-  if(!p||p.status==='loading')return{html:`<span class="p-loading">查詢中...</span>`,price:null};
-  if(p.status==='error')return{html:`<span class="p-err">查無資料</span>`,price:null};
-  return{html:`<span class="mn">${cur} ${fmt(p.price,2)}</span>`,price:p.price};
-}
-
-function renderHoldings(){
-  const l=list();
-  const cards=document.getElementById('hcards');
-  if(!l.length){
-    cards.innerHTML=`<div class="empty">📊<br>尚無持股<br><span style="font-size:12px">點右下角 ＋ 開始追蹤</span></div>`;
-    document.getElementById('hbody').innerHTML=`<tr><td colspan="8"><div class="empty">📊<br>尚無持股</div></td></tr>`;
-    return;
-  }
-  cards.innerHTML=l.map(h=>{
-    const {html:ph,price:cp}=getPriceDisplay(h),cur=CUR[h.market];
-    const vt=cp!=null?toTWD(cp,h.market)*h.shares:null;
-    const pl=vt!=null?vt-h.costTWD:null,pp=h.costTWD>0&&pl!=null?(pl/h.costTWD*100):null;
-    const rawName=ST.prices[h.symbol+'|'+h.market]?.name||h.name||'';
-    const dn=shortName(rawName);
-    const sh=h.shares%1===0?fmt(h.shares):fmt(h.shares,3);
-    return `<div class="hcard">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
-        <div style="display:flex;align-items:center;gap:8px;">
-          <span class="badge badge-${h.market}">${h.market}</span>
-          <span class="hcard-sym">${h.symbol}</span>
-        </div>
-        <span style="font-size:13px;font-weight:600;color:var(--tx);">${ph}</span>
-      </div>
-      <div style="display:flex;justify-content:space-between;align-items:flex-end;">
-        <div>
-          <div class="hcard-nm">${dn}</div>
-          <div style="font-size:11px;color:var(--mu);margin-top:2px;">成本 ${fmtNT(h.costTWD)} · ${sh} 股</div>
-        </div>
-        <div style="text-align:right;">
-          <div style="font-size:13px;font-weight:700;" class="${cls(pl)}">${pl!=null?fmtNT(pl):'－'}</div>
-          <div style="font-size:11px;font-weight:600;" class="${cls(pp)}">${pp!=null?(pp>=0?'+':'')+pp.toFixed(2)+'%':''}</div>
+    const sec=document.createElement('div');
+    sec.className='day-section';
+    const issat=day.day.includes('六');
+    const issun=day.day.includes('日');
+    const wkclass=issat?' weekend-sat':issun?' weekend-sun':'';
+    sec.innerHTML=`
+      <div class="day-header${wkclass}">
+        <span class="day-name">${day.day}</span>
+        <div class="day-meta">
+          <span class="day-hrs">${day.hrs}</span>
+          <span class="day-prog">${dayDone}/${dayTotal}</span>
         </div>
       </div>
-      <div style="display:flex;gap:7px;margin-top:10px;">
-        <button class="ab edit" onclick="openEdit('${h.id}')">編輯</button>
-        <button class="ab sell" onclick="openSell('${h.id}')">賣出</button>
-        <button class="ab del" onclick="del('${h.id}')">刪除</button>
-      </div>
-      ${(h.txHistory&&h.txHistory.length)?`
-      <div class="history-toggle" onclick="toggleHistory('${h.id}')">▾ 購買記錄（${h.txHistory.length} 筆）</div>
-      <div class="hcard-history" id="hist-${h.id}">
-        ${h.txHistory.slice().reverse().map(tx=>`
-        <div class="htx-row">
-          <div class="htx-left">
-            <div class="htx-date">${tx.date||''}</div>
-            <div class="htx-detail">${fmt(tx.shares,tx.shares%1===0?0:3)} 股 × ${cur} ${fmt(tx.price,2)}</div>
+      <div class="day-tasks" id="day-body-${wIdx}-${di}"></div>
+    `;
+    list.appendChild(sec);
+    const body=sec.querySelector('.day-tasks');
+
+    filteredTasks.forEach((task)=>{
+      const ti=day.tasks.indexOf(task);
+      const done=isDone(wIdx,di,ti);
+      const actualKey=`act_w${wIdx}_d${di}_t${ti}`;
+      const actualVal=actuals[actualKey]||0;
+      const actualH=Math.floor(actualVal);
+      const actualM=Math.round((actualVal-actualH)*60);
+      const tc=document.createElement('div');
+      tc.className='tc'+(done?' done':'');
+      tc.innerHTML=`
+        <div class="tc-top" onclick="toggleDetail('det-${wIdx}-${di}-${ti}')">
+          <span class="ttag ${TAG_CLS[task.type]}">${TAG_MAP[task.type]}</span>
+          <div class="tc-info">
+            <div class="tc-title">${task.title}</div>
+            <div class="tc-hrs">⏱ 目標 ${task.hrs}</div>
           </div>
-          <div class="htx-right">
-            <div class="mn">${fmtNT(tx.costTWD)}</div>
-            <div class="htx-cost">匯率 ${tx.fx?tx.fx.toFixed(4):'-'}</div>
+          <div class="ck${done?' done':''}" onclick="event.stopPropagation();toggle(${wIdx},${di},${ti})">${done?'✓':''}</div>
+        </div>
+        <div class="tc-detail" id="det-${wIdx}-${di}-${ti}">
+          ${task.detail}
+          <div class="actual-row">
+            <span class="actual-label">實際花了</span>
+            <input class="actual-input" type="number" min="0" max="24" step="1" placeholder="0" value="${actualH||''}" id="${actualKey}-h" oninput="saveActualHM('${actualKey}',${wIdx})">
+            <span class="actual-unit">時</span>
+            <input class="actual-input" type="number" min="0" max="59" step="5" placeholder="0" value="${actualM||''}" id="${actualKey}-m" oninput="saveActualHM('${actualKey}',${wIdx})">
+            <span class="actual-unit">分</span>
           </div>
-        </div>`).join('')}
-      </div>`:''}
-    </div>`;
-  }).join('');
-
-  document.getElementById('hbody').innerHTML=l.map(h=>{
-    const {html:ph,price:cp}=getPriceDisplay(h),cur=CUR[h.market];
-    const vt=cp!=null?toTWD(cp,h.market)*h.shares:null;
-    const pl=vt!=null?vt-h.costTWD:null,pp=h.costTWD>0&&pl!=null?(pl/h.costTWD*100):null;
-    const rawName=ST.prices[h.symbol+'|'+h.market]?.name||h.name||'';
-    const dn=shortName(rawName);
-    const sh=h.shares%1===0?fmt(h.shares):fmt(h.shares,3);
-    return `<tr>
-      <td><div class="sc"><span class="badge badge-${h.market}">${h.market}</span><div><div class="sym">${h.symbol}</div><div class="sym-nm">${dn}</div></div></div></td>
-      <td class="r">${ph}</td>
-      <td class="r mn">${sh}</td>
-      <td class="r mn">${cur} ${fmt(h.avgPrice,2)}</td>
-      <td class="r mn">${fmtNT(h.costTWD)}</td>
-      <td class="r mn">${vt!=null?fmtNT(vt):'－'}</td>
-      <td class="r"><div class="pw"><span class="mn ${cls(pl)}">${pl!=null?fmtNT(pl):'－'}</span><span class="pct ${cls(pp)}">${pp!=null?(pp>=0?'+':'')+pp.toFixed(2)+'%':''}</span></div></td>
-      <td><div style="display:flex;gap:6px">
-        <button class="tab-ab edit" onclick="openEdit('${h.id}')">編輯</button>
-        <button class="tab-ab sell" onclick="openSell('${h.id}')">賣出</button>
-        <button class="tab-ab del" onclick="del('${h.id}')">刪除</button>
-      </div></td>
-    </tr>`;
-  }).join('');
-}
-
-function renderRealized(){
-  const sec=document.getElementById('real-sec');
-  if(!ST.realized.length){sec.style.display='none';return;}
-  sec.style.display='';
-  document.getElementById('rbody').innerHTML=ST.realized.slice().reverse().map(r=>`
-    <tr>
-      <td><span class="mn">${r.symbol}</span> <span style="font-size:10px;color:var(--mu)">${r.market}</span></td>
-      <td><span class="tag tag-sell">賣出</span></td>
-      <td class="r mn">${fmt(r.shares,3)}</td>
-      <td class="r mn">${CUR[r.market]} ${fmt(r.price,2)}</td>
-      <td class="r mn ${cls(r.pnlTWD)}">${fmtNT(r.pnlTWD)}</td>
-      <td class="r mn" style="color:var(--mu);font-size:11px">${r.date||''}</td>
-    </tr>`).join('');
-}
-
-function setTab(t,el){ST.tab=t;document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));el.classList.add('active');renderHoldings();}
-
-function openModal(id){
-  const el=document.getElementById(id);if(!el)return;
-  el.style.display='flex';
-  el.getBoundingClientRect();
-  el.classList.add('open');
-  document.body.style.overflow='hidden';
-}
-function closeModal(id){
-  const el=document.getElementById(id);if(!el)return;
-  el.classList.remove('open');
-  document.body.style.overflow='';
-  setTimeout(()=>{if(!el.classList.contains('open'))el.style.display='';},220);
-}
-document.querySelectorAll('.overlay').forEach(o=>{
-  o.addEventListener('click',e=>{if(e.target===o)closeModal(o.id);});
-});
-
-const MKT_PH={TW:'2330',US:'AAPL',JP:'7203'};
-function onMktChange(){const m=document.getElementById('f-mkt').value;document.getElementById('f-cur').textContent=CUR[m];document.getElementById('f-sym').placeholder='如：'+MKT_PH[m];}
-function openAdd(){
-  ['f-sym','f-nm','f-sh','f-pr','f-fx'].forEach(id=>document.getElementById(id).value='');
-  document.getElementById('f-mkt').value='TW';
-  document.getElementById('f-dt').value=new Date().toISOString().slice(0,10);
-  document.getElementById('add-err').style.display='none';
-  onMktChange();openModal('addModal');
-}
-function addHolding(){
-  const mkt=document.getElementById('f-mkt').value,sym=document.getElementById('f-sym').value.trim().toUpperCase(),nm=document.getElementById('f-nm').value.trim();
-  const sh=parseFloat(document.getElementById('f-sh').value),pr=parseFloat(document.getElementById('f-pr').value),dt=document.getElementById('f-dt').value;
-  const fxr=parseFloat(document.getElementById('f-fx').value),err=document.getElementById('add-err');
-  if(!sym||isNaN(sh)||sh<=0||isNaN(pr)||pr<=0){err.textContent='請填寫代號、股數與買入價格';err.style.display='block';return;}
-  const fx=(!isNaN(fxr)&&fxr>0)?fxr:(mkt==='US'?(ST.fx.USD_TWD||32.5):mkt==='JP'?(ST.fx.JPY_TWD||0.217):1);
-  const txRecord={id:Date.now().toString(),shares:sh,price:pr,costTWD:toTWD(pr,mkt)*sh,fx,date:dt,type:'BUY'};
-  const ex=ST.holdings.find(h=>h.symbol===sym&&h.market===mkt);
-  if(ex){
-    const nt=ex.shares+sh;
-    ex.costTWD+=toTWD(pr,mkt)*sh;
-    ex.avgPrice=(ex.avgPrice*ex.shares+pr*sh)/nt;
-    ex.shares=nt;ex.name=nm||ex.name;
-    if(!ex.txHistory)ex.txHistory=[];
-    ex.txHistory.push(txRecord);
-  }else{
-    ST.holdings.push({id:Date.now().toString(),market:mkt,symbol:sym,name:nm,shares:sh,avgPrice:pr,costTWD:toTWD(pr,mkt)*sh,buyFx:fx,date:dt,txHistory:[txRecord]});
-  }
-  save();closeModal('addModal');renderAll();
-  if(ST.gasUrl)fetchQuotes();
-}
-function openSell(id){
-  const h=ST.holdings.find(x=>x.id===id);if(!h)return;
-  ST.sellId=id;
-  const cur=CUR[h.market],p=ST.prices[h.symbol+'|'+h.market];
-  document.getElementById('sell-sub').textContent=`賣出 ${h.symbol}（${h.market}）`;
-  document.getElementById('s-cur').textContent=cur;
-  ['s-sh','s-fx'].forEach(id=>document.getElementById(id).value='');
-  document.getElementById('s-pr').value=p?.price?p.price.toFixed(2):'';
-  document.getElementById('s-dt').value=new Date().toISOString().slice(0,10);
-  document.getElementById('sell-err').style.display='none';
-  document.getElementById('sell-info').innerHTML=`
-    <div class="sr"><span>持有股數</span><span>${fmt(h.shares,3)} 股</span></div>
-    <div class="sr"><span>買入均價</span><span>${CUR[h.market]} ${fmt(h.avgPrice,2)}</span></div>
-    <div class="sr"><span>成本（台幣）</span><span>${fmtNT(h.costTWD)}</span></div>
-    ${p?.price?`<div class="sr"><span>現價</span><span>${CUR[h.market]} ${fmt(p.price,2)}</span></div>`:''}`;
-  openModal('sellModal');
-}
-function confirmSell(){
-  const h=ST.holdings.find(x=>x.id===ST.sellId);if(!h)return;
-  const sh=parseFloat(document.getElementById('s-sh').value),pr=parseFloat(document.getElementById('s-pr').value),dt=document.getElementById('s-dt').value;
-  const err=document.getElementById('sell-err');
-  if(isNaN(sh)||sh<=0||sh>h.shares){err.textContent='賣出股數有誤';err.style.display='block';return;}
-  if(isNaN(pr)||pr<=0){err.textContent='請填寫賣出價格';err.style.display='block';return;}
-  const cp=(h.costTWD/h.shares)*sh,pnlTWD=toTWD(pr,h.market)*sh-cp;
-  ST.realized.push({symbol:h.symbol,market:h.market,shares:sh,price:pr,date:dt,pnlTWD});
-  if(sh>=h.shares)ST.holdings=ST.holdings.filter(x=>x.id!==h.id);
-  else{h.shares-=sh;h.costTWD-=cp;}
-  save();closeModal('sellModal');renderAll();
-}
-function openEdit(id){
-  const h=ST.holdings.find(x=>x.id===id);if(!h)return;
-  ST.editId=id;
-  document.getElementById('edit-sub').textContent=`編輯 ${h.symbol}（${h.market}）`;
-  document.getElementById('e-cur').textContent=CUR[h.market];
-  document.getElementById('e-nm').value=h.name||'';
-  document.getElementById('e-sh').value=h.shares;
-  document.getElementById('e-pr').value=h.avgPrice;
-  document.getElementById('e-dt').value=h.date||new Date().toISOString().slice(0,10);
-  document.getElementById('e-fx').value=h.buyFx&&h.market!=='TW'?h.buyFx:'';
-  document.getElementById('edit-err').style.display='none';
-  openModal('editModal');
-}
-function confirmEdit(){
-  const h=ST.holdings.find(x=>x.id===ST.editId);if(!h)return;
-  const nm=document.getElementById('e-nm').value.trim();
-  const sh=parseFloat(document.getElementById('e-sh').value),pr=parseFloat(document.getElementById('e-pr').value),dt=document.getElementById('e-dt').value;
-  const fxr=parseFloat(document.getElementById('e-fx').value),err=document.getElementById('edit-err');
-  if(isNaN(sh)||sh<=0){err.textContent='請輸入有效的股數';err.style.display='block';return;}
-  if(isNaN(pr)||pr<=0){err.textContent='請輸入有效的均價';err.style.display='block';return;}
-  const fx=(!isNaN(fxr)&&fxr>0)?fxr:(h.market==='US'?(ST.fx.USD_TWD||32.5):h.market==='JP'?(ST.fx.JPY_TWD||0.217):1);
-  h.name=nm||h.name;h.shares=sh;h.avgPrice=pr;h.date=dt;h.buyFx=fx;h.costTWD=toTWD(pr,h.market)*sh;
-  save();closeModal('editModal');renderAll();
-}
-function del(id){if(!confirm('確定刪除這筆持股？'))return;ST.holdings=ST.holdings.filter(h=>h.id!==id);save();renderAll();}
-function toggleHistory(id){
-  const el=document.getElementById('hist-'+id);if(!el)return;
-  el.classList.toggle('open');
-  const toggle=el.previousElementSibling;
-  if(toggle)toggle.textContent=el.classList.contains('open')?'▴ 收起購買記錄':'▾ 購買記錄（'+el.querySelectorAll('.htx-row').length+' 筆）';
-}
-
-function recalcCosts(){
-  if(!ST.holdings.length){alert('尚無持股');return;}
-  ST.holdings.forEach(h=>{
-    const fx=h.market==='US'?(ST.fx.USD_TWD||32.5):h.market==='JP'?(ST.fx.JPY_TWD||0.217):1;
-    h.costTWD=h.avgPrice*h.shares*fx;h.buyFx=fx;
-  });
-  save();renderAll();alert('成本已重新計算完成！');
-}
-
-// ── 資產歷史快照 ──────────────────────────────────────────────────────
-// 快照由 GAS dailySnapshot 每天凌晨五點自動執行，前端不自行記錄
-// 開啟走勢圖時從 GAS 讀取歷史資料
-
-function calcTotalValue(){
-  let tv = 0, has = false;
-  ST.holdings.forEach(h=>{
-    const p = ST.prices[h.symbol+'|'+h.market];
-    const canCalc = h.market==='TW' || ST.fxReady;
-    if(p?.price!=null && canCalc){tv+=toTWD(p.price,h.market)*h.shares;has=true;}
-  });
-  return has ? tv : null;
-}
-
-function clearSnapshots(){
-  if(!confirm('確定清除所有走勢歷史記錄？'))return;
-  localStorage.removeItem('sl6_snap');
-  closeModal('chartModal');
-  alert('已清除！');
-}
-
-let chartRange = 7;
-function setChartRange(days, el){
-  chartRange = days;
-  document.querySelectorAll('.chart-range-btn').forEach(b=>b.classList.remove('active'));
-  el.classList.add('active');
-  renderChart();
-}
-
-async function openChart(){
-  openModal('chartModal');
-  // 先用本地資料渲染
-  renderChart();
-  // 再從 GAS 拉最新快照
-  if(ST.gasUrl){
-    try{
-      const form=new FormData();
-      form.append('action','getSnapshots');
-      const r=await fetch(ST.gasUrl,{method:'POST',body:form});
-      const d=await r.json();
-      if(d?.snapshots?.length){
-        // 合併 GAS 快照和本地快照，GAS 優先
-        const gasSnaps=d.snapshots;
-        localStorage.setItem('sl6_snap',JSON.stringify(gasSnaps));
-        renderChart();
-      }
-    }catch(e){console.log('getSnapshots error:',e.message);}
-  }
-}
-
-function renderChart(){
-  const wrap = document.getElementById('chartWrap');
-  const statEl = document.getElementById('chartStat');
-  let snapshots = JSON.parse(localStorage.getItem('sl6_snap')||'[]');
-
-  if(!snapshots.length){
-    wrap.innerHTML = '<div class="chart-empty">📊<br>尚無歷史資料<br><span style="font-size:11px;color:var(--mu)">每天凌晨五點自動記錄一筆</span></div>';
-    statEl.innerHTML = '';
-    return;
-  }
-
-  // 篩選範圍
-  let data = snapshots;
-  if(chartRange > 0){
-    const cutoff = new Date();
-    cutoff.setDate(cutoff.getDate() - chartRange);
-    const cutoffStr = cutoff.toISOString().slice(0,10);
-    data = snapshots.filter(s => s.date >= cutoffStr);
-  }
-  if(!data.length) data = snapshots.slice(-1);
-
-  // SVG 折線圖
-  const W = 500, H = 180, PL = 60, PR = 10, PT = 16, PB = 32;
-  const vals = data.map(d=>d.value);
-  const minV = Math.min(...vals), maxV = Math.max(...vals);
-  const range = maxV - minV || 1;
-
-  const xScale = i => PL + (i/(data.length-1||1))*(W-PL-PR);
-  const yScale = v => PT + (1-(v-minV)/range)*(H-PT-PB);
-
-  // 建立路徑
-  const points = data.map((d,i)=>({x:xScale(i),y:yScale(d.value),d}));
-  const linePath = points.map((p,i)=>(i===0?`M${p.x},${p.y}`:`L${p.x},${p.y}`)).join(' ');
-  const areaPath = `${linePath} L${points[points.length-1].x},${H-PB} L${PL},${H-PB} Z`;
-
-  // 顏色判斷
-  const isUp = vals[vals.length-1] >= vals[0];
-  const lineColor = isUp ? '#6ee7b7' : '#f87171';
-  const areaColor = isUp ? 'rgba(110,231,183,0.12)' : 'rgba(248,113,113,0.12)';
-
-  // Y 軸標籤
-  const yLabels = [minV, (minV+maxV)/2, maxV].map((v,i)=>{
-    const y = yScale(v);
-    const label = v>=1000000 ? (v/1000000).toFixed(1)+'M' : v>=1000 ? (v/1000).toFixed(0)+'K' : v.toFixed(0);
-    return `<text x="${PL-6}" y="${y+4}" text-anchor="end" font-size="9" fill="#6b7280" font-family="monospace">${label}</text>`;
-  }).join('');
-
-  // X 軸標籤（最多顯示 5 個）
-  const xStep = Math.ceil(data.length/5);
-  const xLabels = data.filter((_,i)=>i%xStep===0||i===data.length-1).map((d,_,arr)=>{
-    const i = data.indexOf(d);
-    const x = xScale(i);
-    const label = d.date.slice(5); // MM-DD
-    return `<text x="${x}" y="${H-PB+14}" text-anchor="middle" font-size="9" fill="#6b7280" font-family="monospace">${label}</text>`;
-  }).join('');
-
-  // 最後一點標示
-  const last = points[points.length-1];
-  const lastLabel = fmtNT(last.d.value);
-
-  wrap.innerHTML = `
-    <svg viewBox="0 0 ${W} ${H}" width="100%" style="display:block;">
-      <defs>
-        <linearGradient id="ag" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stop-color="${lineColor}" stop-opacity="0.3"/>
-          <stop offset="100%" stop-color="${lineColor}" stop-opacity="0"/>
-        </linearGradient>
-      </defs>
-      <!-- Grid lines -->
-      <line x1="${PL}" y1="${PT}" x2="${W-PR}" y2="${PT}" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>
-      <line x1="${PL}" y1="${(PT+H-PB)/2}" x2="${W-PR}" y2="${(PT+H-PB)/2}" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>
-      <line x1="${PL}" y1="${H-PB}" x2="${W-PR}" y2="${H-PB}" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>
-      <!-- Area -->
-      <path d="${areaPath}" fill="url(#ag)"/>
-      <!-- Line -->
-      <path d="${linePath}" fill="none" stroke="${lineColor}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-      <!-- Last point dot -->
-      <circle cx="${last.x}" cy="${last.y}" r="4" fill="${lineColor}"/>
-      <!-- Labels -->
-      ${yLabels}${xLabels}
-    </svg>`;
-
-  // 統計
-  const first = vals[0], lastV = vals[vals.length-1];
-  const change = lastV - first;
-  const changePct = first > 0 ? (change/first*100) : 0;
-  const maxVal = Math.max(...vals), minVal = Math.min(...vals);
-  statEl.innerHTML = `
-    <div class="chart-stat-item">
-      <div class="chart-stat-lbl">期間變化</div>
-      <div class="chart-stat-val ${cls(change)}">${change>=0?'+':''}${fmtNT(change)}</div>
-    </div>
-    <div class="chart-stat-item">
-      <div class="chart-stat-lbl">報酬率</div>
-      <div class="chart-stat-val ${cls(changePct)}">${changePct>=0?'+':''}${changePct.toFixed(2)}%</div>
-    </div>
-    <div class="chart-stat-item">
-      <div class="chart-stat-lbl">最高/最低</div>
-      <div class="chart-stat-val" style="font-size:11px">${(maxVal/10000).toFixed(0)}萬<br><span style="color:var(--mu)">${(minVal/10000).toFixed(0)}萬</span></div>
-    </div>`;
-}
-
-load();updateBanner();renderAll();
-fetchFX().then(()=>{
-  if(ST.fxReady){
-    let changed=false;
-    ST.holdings.forEach(h=>{
-      if(h.market==='TW')return;
-      const fx=h.market==='US'?ST.fx.USD_TWD:ST.fx.JPY_TWD;
-      const expectedCost=h.avgPrice*h.shares*fx;
-      const ratio=h.costTWD/expectedCost;
-      if(ratio<0.5||ratio>2){h.costTWD=expectedCost;h.buyFx=fx;changed=true;}
+        </div>
+      `;
+      body.appendChild(tc);
     });
-    if(changed)save();
+
+    // only show remark box when showing all tasks or when this day has tasks of the filtered type
+    if(curFilter==='all'){
+      const remarkKey=`rmk_w${wIdx}_d${di}`;
+      const remarkWrap=document.createElement('div');
+      remarkWrap.className='remark-wrap';
+      remarkWrap.innerHTML=`
+        <div class="remark-label">✏️ 今日學習備忘</div>
+        <textarea class="remark-input" id="${remarkKey}" placeholder="記下今天的收穫、卡關點、或想繼續做的事...">${remarks[remarkKey]||''}</textarea>
+        <div class="remark-saved" id="${remarkKey}-saved">已儲存</div>
+      `;
+      body.appendChild(remarkWrap);
+      const ta=remarkWrap.querySelector('textarea');
+      let saveTimer;
+      ta.addEventListener('input',()=>{
+        remarks[remarkKey]=ta.value;
+        clearTimeout(saveTimer);
+        saveTimer=setTimeout(()=>{
+          save();
+          const savedEl=document.getElementById(remarkKey+'-saved');
+          if(savedEl){savedEl.classList.add('show');setTimeout(()=>savedEl.classList.remove('show'),1500);}
+        },600);
+      });
+    }
+  });
+
+  if(!anyVisible){
+    const msg=document.createElement('div');
+    msg.className='no-task-msg';
+    const labels={cad:'AutoCAD',sku:'SketchUp',draw:'手繪',port:'作品集',model:'模型'};
+    msg.textContent=`本週沒有 ${labels[curFilter]||''} 的任務`;
+    list.appendChild(msg);
   }
-  if(ST.gasUrl&&ST.holdings.length)fetchQuotes();
-  else renderAll();
-});
+
+  const total=totalTasks(wIdx),done=doneTasks(wIdx),allDone=done===total;
+  const btn=document.getElementById('cab');
+  btn.className='cab'+(allDone?' alldone':'');
+  document.getElementById('cab-icon').textContent=allDone?'✓':'○';
+  document.getElementById('cab-txt').textContent=allDone?'本週已全部完成':'本週全部打卡';
+  updateWeekTimeSummary(wIdx);
+}
+
+function saveActualHM(key, wIdx){
+  const hEl=document.getElementById(key+'-h');
+  const mEl=document.getElementById(key+'-m');
+  const h=parseFloat(hEl?.value)||0;
+  const m=parseFloat(mEl?.value)||0;
+  actuals[key]=Math.round((h+m/60)*100)/100;
+  save();
+  updateWeekTimeSummary(wIdx);
+}
+
+function parseMin(str){
+  if(!str) return 0;
+  const hr=str.match(/([\d.]+)\s*hr/);
+  if(hr) return Math.round(parseFloat(hr[1])*60);
+  const mn=str.match(/([\d.]+)\s*min/);
+  if(mn) return Math.round(parseFloat(mn[1]));
+  return 0;
+}
+
+function fmtMin(totalMin){
+  const h=Math.floor(totalMin/60);
+  const m=totalMin%60;
+  if(h>0&&m>0) return h+'h '+m+'m';
+  if(h>0) return h+'h';
+  if(m>0) return m+'m';
+  return '0';
+}
+
+function updateWeekTimeSummary(wIdx){
+  const w=WEEKS[wIdx];
+
+  // sum target in minutes
+  let targetMin=0;
+  w.days.forEach(day=>{
+    day.tasks.forEach(task=>{ targetMin+=parseMin(task.hrs); });
+  });
+
+  // sum actuals in minutes
+  let actualMin=0;
+  w.days.forEach((day,di)=>{
+    day.tasks.forEach((_,ti)=>{
+      const v=actuals[`act_w${wIdx}_d${di}_t${ti}`]||0;
+      actualMin+=Math.round(v*60);
+    });
+  });
+
+  const tEl=document.getElementById('wts-target');
+  const aEl=document.getElementById('wts-actual');
+  const dEl=document.getElementById('wts-diff');
+  if(!tEl) return;
+
+  tEl.textContent=targetMin>0?fmtMin(targetMin):'—';
+  aEl.textContent=actualMin>0?fmtMin(actualMin):'0';
+
+  if(targetMin>0&&actualMin>0){
+    const diff=actualMin-targetMin;
+    const sign=diff>=0?'+':'-';
+    dEl.textContent=sign+fmtMin(Math.abs(diff));
+    dEl.className='wts-val '+(diff>0?'wts-over':'wts-ok');
+  } else {
+    dEl.textContent='—';
+    dEl.className='wts-val';
+  }
+}
+
+function toggleDetail(id){
+  const el=document.getElementById(id);
+  if(el)el.classList.toggle('open');
+}
+
+function updateStats(){
+  const total=WEEKS.reduce((s,_,i)=>s+doneTasks(i),0);
+  const wdone=WEEKS.filter((_,i)=>{const t=totalTasks(i);return t>0&&doneTasks(i)===t;}).length;
+  const streak=calcStreak();
+  const allTotal=WEEKS.reduce((s,_,i)=>s+totalTasks(i),0);
+  document.getElementById('s-total').textContent=WEEKS.length;
+  document.getElementById('s-wdone').textContent=wdone;
+  document.getElementById('s-tasks').textContent=total;
+  document.getElementById('s-streak').textContent=streak;
+  document.getElementById('stk-n').textContent=streak;
+  document.getElementById('pfill').style.width=Math.round(total/allTotal*100)+'%';
+}
+
+function calcStreak(){
+  if(!checkDates.length)return 0;
+  const sorted=[...new Set(checkDates)].sort((a,b)=>new Date(b)-new Date(a));
+  let streak=0,cur=new Date();cur.setHours(0,0,0,0);
+  for(let d of sorted){
+    const dd=new Date(d);dd.setHours(0,0,0,0);
+    const diff=Math.round((cur-dd)/86400000);
+    if(diff<=1){streak++;cur=dd;}else break;
+  }
+  return streak;
+}
+
+function updateDots(){
+  const c=document.getElementById('wdots');c.innerHTML='';
+  WEEKS.forEach((_,i)=>{
+    const done=doneTasks(i),total=totalTasks(i);
+    const d=document.createElement('div');
+    d.className='wd';
+    const aprShort=['4/13','4/19','4/21','4/26'];
+    d.textContent=WEEKS[i].label;
+    d.style.fontSize='9px';
+    if(i===curWeek)d.classList.add('active');
+    if(total>0&&done===total)d.classList.add('full');
+    else if(done>0)d.classList.add('part');
+    d.onclick=()=>{curWeek=i;renderWeek(i);updateDots();scrollDot(i);switchPage('tracker');};
+    c.appendChild(d);
+  });
+}
+
+function scrollDot(i){
+  const dots=document.querySelectorAll('.wd');
+  if(dots[i])dots[i].scrollIntoView({behavior:'smooth',block:'nearest',inline:'center'});
+}
+
+function chgWeek(dir){
+  const n=curWeek+dir;
+  if(n>=0&&n<WEEKS.length){curWeek=n;renderWeek(n);updateDots();scrollDot(n);if(curPage!=='tracker')switchPage('tracker');}
+}
+
+function switchPage(p){
+  curPage=p;
+  const pages=['tracker','overview','streak'];
+  pages.forEach(pg=>{
+    const el=document.getElementById('page-'+pg);
+    if(pg==='tracker'){el.style.display=p==='tracker'?'block':'none';}
+    else{el.classList.toggle('active',p===pg);}
+    document.getElementById('nav-'+pg).classList.toggle('active',p===pg);
+  });
+  if(p==='overview')renderOverview();
+  if(p==='streak')renderHeatmap();
+}
+
+function renderOverview(){
+  const months=[
+    {label:"四月底前 · 暖身",range:[0,3]},
+    {label:"五月 · 設計發展",range:[4,7]},
+    {label:"六月 · 圖面深化",range:[8,11]},
+    {label:"七月 · 作品集完成",range:[12,15]},
+    {label:"八月+ · 全力求職",range:[16,16]},
+  ];
+  const c=document.getElementById('ov-content');c.innerHTML='';
+  months.forEach(m=>{
+    const sec=document.createElement('div');sec.className='mo-sec';
+    sec.innerHTML=`<div class="mo-lbl">${m.label}</div>`;
+    for(let i=m.range[0];i<=m.range[1];i++){
+      const w=WEEKS[i];
+      const done=doneTasks(i),total=totalTasks(i);
+      const row=document.createElement('div');row.className='ov-row';
+      const dotsHtml=Array.from({length:Math.min(total,8)},(_,j)=>`<div class="ovd${isDone(i,Math.floor(j/w.days[0].tasks.length),j%w.days[0].tasks.length)?' done':''}"></div>`).join('');
+      row.innerHTML=`
+        <div class="ov-num">${w.label}</div>
+        <div class="ov-info">
+          <div class="ov-t">${w.title}</div>
+          <div class="ov-s">${done}/${total} · ${w.totalHrs}</div>
+        </div>
+        <div class="ov-ds">${dotsHtml}</div>
+      `;
+      row.onclick=()=>{curWeek=i;renderWeek(i);switchPage('tracker');updateDots();scrollDot(i);};
+      sec.appendChild(row);
+    }
+    c.appendChild(sec);
+  });
+}
+
+function renderHeatmap(){
+  const hm=document.getElementById('hm');hm.innerHTML='';
+  for(let i=0;i<WEEKS.length;i++){
+    const done=doneTasks(i),total=totalTasks(i);
+    const level=total===0?0:Math.ceil(done/total*4);
+    const cell=document.createElement('div');
+    cell.className=`hc h${level}`;
+    cell.title=WEEKS[i].label;
+    cell.onclick=()=>{curWeek=i;renderWeek(i);switchPage('tracker');updateDots();};
+    hm.appendChild(cell);
+  }
+}
+
+function showToast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),2500);
+}
+
+function init(){
+  load();
+  const now=new Date();
+  const may5=new Date(now.getFullYear(),4,5);
+  const apr21=new Date(now.getFullYear(),3,21);
+  let startWeek=0;
+  if(now>=may5) startWeek=Math.min(2+Math.floor((now-may5)/(7*86400000)), WEEKS.length-1);
+  else if(now>=apr21) startWeek=1;
+  else startWeek=0;
+  curWeek=startWeek;
+  renderWeek(curWeek);
+  updateDots();
+  updateStats();
+  scrollDot(curWeek);
+  setFilter('all');
+}
+
+init();
 </script>
 </body>
 </html>
