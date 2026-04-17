@@ -938,11 +938,22 @@ function renderChart(){
   const lineColor = isUp ? '#6ee7b7' : '#f87171';
   const areaColor = isUp ? 'rgba(110,231,183,0.12)' : 'rgba(248,113,113,0.12)';
 
-  // Y 軸標籤
-  const yLabels = [minV, (minV+maxV)/2, maxV].map((v,i)=>{
+  // Y 軸標籤（根據數值範圍動態決定小數位數）
+  const fmtY = v => {
+    if(v >= 1000000){
+      // 差距小時顯示更多小數
+      const decimals = (maxV - minV) < 500000 ? 2 : 1;
+      return (v/1000000).toFixed(decimals)+'M';
+    }
+    if(v >= 1000){
+      const decimals = (maxV - minV) < 50000 ? 1 : 0;
+      return (v/1000).toFixed(decimals)+'K';
+    }
+    return v.toFixed(0);
+  };
+  const yLabels = [maxV, (minV+maxV)/2, minV].map((v)=>{
     const y = yScale(v);
-    const label = v>=1000000 ? (v/1000000).toFixed(1)+'M' : v>=1000 ? (v/1000).toFixed(0)+'K' : v.toFixed(0);
-    return `<text x="${PL-6}" y="${y+4}" text-anchor="end" font-size="9" fill="#6b7280" font-family="monospace">${label}</text>`;
+    return `<text x="${PL-6}" y="${y+4}" text-anchor="end" font-size="9" fill="#6b7280" font-family="monospace">${fmtY(v)}</text>`;
   }).join('');
 
   // X 軸標籤（最多顯示 5 個）
