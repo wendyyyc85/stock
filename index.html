@@ -493,17 +493,32 @@ async function gasCall(params){
   }
 }
 
+// 瀏覽器直接向 Frankfurter v2 要匯率
+// 注意：舊版打的 api.frankfurter.app 是 v1，資料源只有 ECB，而 ECB 沒有台幣，
+// rates.TWD 永遠 undefined，所以那條路徑其實從來沒成功過。
+// v2 的 api.frankfurter.dev 含台灣央行 CBC，而且 JPY/TWD 可以直接拿。
+async function fetchFXDirect(){
+  const one=async(from,to)=>{
+    const r=await fetch(`https://api.frankfurter.dev/v2/rate/${from}/${to}`);
+    if(!r.ok)return null;
+    const d=await r.json();
+    const v=typeof d.rate==='number'?d.rate:(d.rates&&d.rates[to.toUpperCase()]);
+    return (typeof v==='number'&&v>0)?v:null;
+  };
+  const [u,j]=await Promise.all([one('usd','twd'),one('jpy','twd')]);
+  if(u&&j&&u>25&&u<45&&j>0.1&&j<0.4)return{USD_TWD:u,JPY_TWD:j};
+  return null;   // 數字不合理就當沒拿到，別讓爛匯率污染損益
+}
+
 async function fetchFX(){
-  if(!ST.gasUrl){
-    try{const d=await(await fetch('https://api.frankfurter.app/latest?from=USD&to=TWD,JPY')).json();ST.fx.USD_TWD=d.rates.TWD;ST.fx.JPY_TWD=d.rates.TWD/d.rates.JPY;setFXBar(false);ST.fxReady=true;}
-    catch(e){ST.fx.USD_TWD=32.5;ST.fx.JPY_TWD=0.217;setFXBar(true);ST.fxReady=false;}
-    return;
-  }
-  try{
-    const d=await gasCall({action:'fx'});
-    if(d?.USD_TWD){ST.fx.USD_TWD=d.USD_TWD;ST.fx.JPY_TWD=d.JPY_TWD;setFXBar(false);ST.fxReady=true;}
-    else{ST.fx.USD_TWD=32.5;ST.fx.JPY_TWD=0.217;setFXBar(true);ST.fxReady=false;}
-  }catch(e){ST.fx.USD_TWD=32.5;ST.fx.JPY_TWD=0.217;setFXBar(true);ST.fxReady=false;}
+  let d=null;
+  // 1. 先問 GAS（後端也是走 Frankfurter v2，Yahoo 當備援）
+  if(ST.gasUrl){try{d=await gasCall({action:'fx'});}catch(e){d=null;}}
+  // 2. GAS 沒給就自己打一次，多一層保險
+  if(!d?.USD_TWD){try{d=await fetchFXDirect();}catch(e){d=null;}}
+
+  if(d?.USD_TWD){ST.fx.USD_TWD=d.USD_TWD;ST.fx.JPY_TWD=d.JPY_TWD;setFXBar(false);ST.fxReady=true;}
+  else{ST.fx.USD_TWD=32.5;ST.fx.JPY_TWD=0.217;setFXBar(true);ST.fxReady=false;}
 }
 function setFXBar(fb){
   document.getElementById('fx-usd').textContent=ST.fx.USD_TWD?.toFixed(2)||'－';
