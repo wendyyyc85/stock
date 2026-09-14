@@ -4,6 +4,11 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>StockLens</title>
+<meta name="theme-color" content="#f2f2f7">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="StockLens">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%2334c896'/%3E%3Cpath d='M14 42l12-13 9 8 15-19' stroke='white' stroke-width='6' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
 
 <style>
 :root{
@@ -107,6 +112,9 @@ header{display:flex;align-items:center;justify-content:space-between;margin-bott
 .htx-detail{color:var(--tx);}
 .htx-right{text-align:right;}
 .htx-cost{font-size:11px;color:var(--mu);margin-top:1px;}
+.htx-type{display:inline-block;font-size:10px;padding:1px 5px;border-radius:4px;margin-right:6px;font-weight:600;}
+.htx-type.buy{background:#f0faf5;color:#1a9e5c;}
+.htx-type.sell{background:#fdecea;color:#d93025;}
 .history-toggle{font-size:11px;color:var(--mu);font-family:var(--mn);cursor:pointer;margin-top:6px;text-align:center;padding:4px;border:1px solid var(--bd);border-radius:6px;transition:all .15s;}
 .history-toggle:active{background:var(--sf2);}
 .ab{flex:1;background:#f2f2f7;border:none;border-radius:6px;color:#3c3c43;cursor:pointer;padding:8px 0;font-size:12px;font-family:var(--mn);text-align:center;transition:all .12s;}
@@ -189,8 +197,12 @@ td{padding:11px 13px;vertical-align:middle;}
 .chart-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:8px;}
 .chart-range{display:flex;gap:4px;}
 .chart-range-btn{background:var(--sf2);border:1px solid var(--bd);border-radius:6px;color:var(--mu);cursor:pointer;padding:4px 10px;font-size:11px;font-family:var(--mn);transition:all .15s;}
-.chart-range-btn.active{background:var(--gr);color:#0d0f14;border-color:var(--gr);font-weight:700;}
+.chart-range-btn.active{background:var(--gr);color:#fff;border-color:var(--gr);font-weight:700;}
 .chart-empty{text-align:center;padding:40px 0;color:var(--mu);font-size:13px;line-height:2;}
+.chart-tip{display:flex;align-items:baseline;gap:8px;font-family:var(--mn);margin-bottom:6px;min-height:22px;}
+.chart-tip .d{font-size:11px;color:var(--mu);}
+.chart-tip .v{font-size:16px;font-weight:700;}
+#chartSvg{touch-action:none;cursor:crosshair;}
 .chart-stat{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:14px;}
 .chart-stat-item{background:var(--sf2);border-radius:var(--rs);padding:10px;text-align:center;}
 .chart-stat-lbl{font-size:10px;color:var(--mu);font-family:var(--mn);margin-bottom:3px;}
@@ -206,7 +218,7 @@ td{padding:11px 13px;vertical-align:middle;}
   <div class="logo">
     <div>
       <div class="logo-text">StockLens</div>
-      <div class="logo-sub" style="display:block !important;">2026年4月8日</div>
+      <div class="logo-sub" id="stamp" style="display:block !important;">尚未取得報價</div>
     </div>
   </div>
   <div class="header-right">
@@ -414,8 +426,10 @@ td{padding:11px 13px;vertical-align:middle;}
 
 <script>
 const CUR={TW:'TWD',US:'USD',JP:'JPY'};
+function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,7);}
+function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
 const GAS_URL='https://script.google.com/macros/s/AKfycbxUO9NbXf5gduZFF0uapUzJSvegoM9dtzEi2UuVtdKtDHC_t1wujv8M1fPy41-2ziei0Q/exec';
-const ST={holdings:[],realized:[],fx:{USD_TWD:null,JPY_TWD:null},prices:{},tab:'all',sellId:null,editId:null,gasUrl:GAS_URL,fxReady:false};
+const ST={holdings:[],realized:[],fx:{USD_TWD:null,JPY_TWD:null},prices:{},tab:'all',sellId:null,editId:null,gasUrl:GAS_URL,fxReady:false,lastQuote:null};
 
 function save(){
   try{
@@ -426,7 +440,7 @@ function save(){
   syncHoldingsToGAS();
 }
 async function syncHoldingsToGAS(){
-  if(!ST.gasUrl||!ST.holdings.length)return;
+  if(!ST.gasUrl)return;   // 持股清空時也要同步，否則 GAS 會繼續用舊持股做快照
   try{
     const form=new FormData();
     form.append('action','syncHoldings');
@@ -445,7 +459,7 @@ function load(){
     ST.holdings=JSON.parse(h||'[]');
     ST.realized=JSON.parse(r||'[]');
     ST.gasUrl=localStorage.getItem('sl6_gas')||localStorage.getItem('sl5_gas')||GAS_URL;
-    ST.holdings.forEach((h,i)=>{if(!h.id)h.id=String(Date.now()+i);});
+    ST.holdings.forEach(h=>{if(!h.id)h.id=uid();});
   }catch(e){ST.holdings=[];ST.realized=[];}
 }
 
@@ -481,8 +495,8 @@ async function gasCall(params){
 
 async function fetchFX(){
   if(!ST.gasUrl){
-    try{const d=await(await fetch('https://api.frankfurter.app/latest?from=USD&to=TWD,JPY')).json();ST.fx.USD_TWD=d.rates.TWD;ST.fx.JPY_TWD=d.rates.TWD/d.rates.JPY;setFXBar(false);}
-    catch(e){ST.fx.USD_TWD=32.5;ST.fx.JPY_TWD=0.217;setFXBar(true);}
+    try{const d=await(await fetch('https://api.frankfurter.app/latest?from=USD&to=TWD,JPY')).json();ST.fx.USD_TWD=d.rates.TWD;ST.fx.JPY_TWD=d.rates.TWD/d.rates.JPY;setFXBar(false);ST.fxReady=true;}
+    catch(e){ST.fx.USD_TWD=32.5;ST.fx.JPY_TWD=0.217;setFXBar(true);ST.fxReady=false;}
     return;
   }
   try{
@@ -519,8 +533,23 @@ async function fetchQuotes(){
       });
     }else ST.holdings.forEach(h=>{ST.prices[h.symbol+'|'+h.market]={status:'error'};});
   }catch(e){ST.holdings.forEach(h=>{ST.prices[h.symbol+'|'+h.market]={status:'error'};});}
+  if(Object.values(ST.prices).some(p=>p.status==='ok'))ST.lastQuote=Date.now();
+  setStamp();
   save();renderAll();
 }
+
+function setStamp(){
+  const el=document.getElementById('stamp');if(!el)return;
+  if(!ST.lastQuote){el.textContent='尚未取得報價';return;}
+  const d=new Date(ST.lastQuote);
+  el.textContent='報價 '+String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0')+' 更新';
+}
+// 回到分頁且距上次報價超過 5 分鐘時自動更新
+document.addEventListener('visibilitychange',()=>{
+  if(document.visibilityState!=='visible')return;
+  if(ST.lastQuote&&Date.now()-ST.lastQuote<5*60*1000)return;
+  if(ST.gasUrl&&ST.holdings.length)refreshAll();
+});
 
 async function refreshAll(){
   const btn=document.getElementById('rfBtn');
@@ -589,7 +618,8 @@ function renderSummary(){
 
   document.getElementById('s-rl').textContent=fmtNT(rt);
   document.getElementById('s-rl').className='cv '+cls(rt);
-  const rtPct=tc>0?(rt/tc*100):null;
+  const rCost=ST.realized.reduce((s,r)=>s+(r.costTWD||0),0);
+  const rtPct=rCost>0?(rt/rCost*100):null;   // 分母＝實際賣出部位的成本，不是目前持股成本
   document.getElementById('s-rl-pct').textContent=rtPct!=null?(rtPct>=0?'+':'')+rtPct.toFixed(2)+'%':'–';
   document.getElementById('s-rl-pct').className='cs '+cls(rt);
 
@@ -597,15 +627,25 @@ function renderSummary(){
   document.getElementById('s-cs').textContent=pct!=null?`平均報酬 ${pct>=0?'+':''}${pct.toFixed(2)}%`:'尚無報價';
 
   const totalPnl=(pnl||0)+rt;
-  const totalPnlPct=tc>0?(totalPnl/tc*100):null;
-  document.getElementById('s-total-pnl').textContent=tc>0?fmtNT(totalPnl):'NT$ –';
+  const totalBase=tc+rCost;
+  const totalPnlPct=totalBase>0?(totalPnl/totalBase*100):null;
+  document.getElementById('s-total-pnl').textContent=totalBase>0?fmtNT(totalPnl):'NT$ –';
   document.getElementById('s-total-pnl').className='cv '+cls(totalPnl);
   document.getElementById('s-total-pnl-pct').textContent=totalPnlPct!=null?(totalPnlPct>=0?'+':'')+totalPnlPct.toFixed(2)+'%':'–';
   document.getElementById('s-total-pnl-pct').className='cs '+cls(totalPnlPct);
   document.getElementById('s-total-pnl-card').className='card card-big';
 }
 
-function list(){return ST.tab==='all'?ST.holdings:ST.holdings.filter(h=>h.market===ST.tab);}
+function mvOf(h){
+  const p=ST.prices[h.symbol+'|'+h.market];
+  const ok=(h.market==='TW'||ST.fxReady)&&p?.price!=null;
+  return ok?toTWD(p.price,h.market)*h.shares:0;
+}
+// 依現值由大到小排序，最重的部位永遠在最上面
+function list(){
+  const a=ST.tab==='all'?ST.holdings:ST.holdings.filter(h=>h.market===ST.tab);
+  return a.slice().sort((x,y)=>mvOf(y)-mvOf(x));
+}
 
 function getPriceDisplay(h){
   const key=h.symbol+'|'+h.market,p=ST.prices[key],cur=CUR[h.market];
@@ -617,6 +657,7 @@ function getPriceDisplay(h){
 
 function renderHoldings(){
   const l=list();
+  const totalMV=ST.holdings.reduce((s,h)=>s+mvOf(h),0);
   const cards=document.getElementById('hcards');
   if(!l.length){
     cards.innerHTML=`<div class="empty">📊<br>尚無持股<br><span style="font-size:12px">點右下角 ＋ 開始追蹤</span></div>`;
@@ -625,7 +666,9 @@ function renderHoldings(){
   }
   cards.innerHTML=l.map(h=>{
     const {html:ph,price:cp}=getPriceDisplay(h),cur=CUR[h.market];
-    const vt=cp!=null?toTWD(cp,h.market)*h.shares:null;
+    const canCalc=h.market==='TW'||ST.fxReady;   // 匯率沒就緒就不算損益，與「總資產」一致
+    const vt=(cp!=null&&canCalc)?toTWD(cp,h.market)*h.shares:null;
+    const wt=(vt!=null&&totalMV>0)?vt/totalMV*100:null;
     const pl=vt!=null?vt-h.costTWD:null,pp=h.costTWD>0&&pl!=null?(pl/h.costTWD*100):null;
     const rawName=ST.prices[h.symbol+'|'+h.market]?.name||h.name||'';
     const dn=shortName(rawName);
@@ -634,14 +677,14 @@ function renderHoldings(){
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
         <div style="display:flex;align-items:center;gap:8px;">
           <span class="badge badge-${h.market}">${h.market}</span>
-          <span class="hcard-sym">${h.symbol}</span>
+          <span class="hcard-sym">${esc(h.symbol)}</span>
         </div>
         <span style="font-size:13px;font-weight:600;color:var(--tx);">${ph}</span>
       </div>
       <div style="display:flex;justify-content:space-between;align-items:flex-end;">
         <div>
-          <div class="hcard-nm">${dn}</div>
-          <div style="font-size:11px;color:var(--mu);margin-top:2px;">成本 ${fmtNT(h.costTWD)} · ${sh} 股</div>
+          <div class="hcard-nm">${esc(dn)}</div>
+          <div style="font-size:11px;color:var(--mu);margin-top:2px;">成本 ${fmtNT(h.costTWD)} · ${sh} 股${wt!=null?' · 佔 '+wt.toFixed(1)+'%':''}</div>
         </div>
         <div style="text-align:right;">
           <div style="font-size:13px;font-weight:700;" class="${cls(pl)}">${pl!=null?fmtNT(pl):'－'}</div>
@@ -654,13 +697,13 @@ function renderHoldings(){
         <button class="ab del" onclick="del('${h.id}')">刪除</button>
       </div>
       ${(h.txHistory&&h.txHistory.length)?`
-      <div class="history-toggle" onclick="toggleHistory('${h.id}')">▾ 購買記錄（${h.txHistory.length} 筆）</div>
+      <div class="history-toggle" onclick="toggleHistory('${h.id}')">▾ 交易紀錄（${h.txHistory.length} 筆）</div>
       <div class="hcard-history" id="hist-${h.id}">
         ${h.txHistory.slice().reverse().map(tx=>`
         <div class="htx-row">
           <div class="htx-left">
             <div class="htx-date">${tx.date||''}</div>
-            <div class="htx-detail">${fmt(tx.shares,tx.shares%1===0?0:3)} 股 × ${cur} ${fmt(tx.price,2)}</div>
+            <div class="htx-detail"><span class="htx-type ${tx.type==='SELL'?'sell':'buy'}">${tx.type==='SELL'?'賣':'買'}</span>${fmt(tx.shares,tx.shares%1===0?0:3)} 股 × ${cur} ${fmt(tx.price,2)}</div>
           </div>
           <div class="htx-right">
             <div class="mn">${fmtNT(tx.costTWD)}</div>
@@ -673,18 +716,20 @@ function renderHoldings(){
 
   document.getElementById('hbody').innerHTML=l.map(h=>{
     const {html:ph,price:cp}=getPriceDisplay(h),cur=CUR[h.market];
-    const vt=cp!=null?toTWD(cp,h.market)*h.shares:null;
+    const canCalc=h.market==='TW'||ST.fxReady;   // 匯率沒就緒就不算損益，與「總資產」一致
+    const vt=(cp!=null&&canCalc)?toTWD(cp,h.market)*h.shares:null;
+    const wt=(vt!=null&&totalMV>0)?vt/totalMV*100:null;
     const pl=vt!=null?vt-h.costTWD:null,pp=h.costTWD>0&&pl!=null?(pl/h.costTWD*100):null;
     const rawName=ST.prices[h.symbol+'|'+h.market]?.name||h.name||'';
     const dn=shortName(rawName);
     const sh=h.shares%1===0?fmt(h.shares):fmt(h.shares,3);
     return `<tr>
-      <td><div class="sc"><span class="badge badge-${h.market}">${h.market}</span><div><div class="sym">${h.symbol}</div><div class="sym-nm">${dn}</div></div></div></td>
+      <td><div class="sc"><span class="badge badge-${h.market}">${h.market}</span><div><div class="sym">${esc(h.symbol)}</div><div class="sym-nm">${esc(dn)}</div></div></div></td>
       <td class="r">${ph}</td>
       <td class="r mn">${sh}</td>
       <td class="r mn">${cur} ${fmt(h.avgPrice,2)}</td>
       <td class="r mn">${fmtNT(h.costTWD)}</td>
-      <td class="r mn">${vt!=null?fmtNT(vt):'－'}</td>
+      <td class="r mn">${vt!=null?fmtNT(vt):'－'}${wt!=null?`<div style="font-size:10px;color:var(--mu);margin-top:1px;font-weight:400;">佔 ${wt.toFixed(1)}%</div>`:''}</td>
       <td class="r"><div class="pw"><span class="mn ${cls(pl)}">${pl!=null?fmtNT(pl):'－'}</span><span class="pct ${cls(pp)}">${pp!=null?(pp>=0?'+':'')+pp.toFixed(2)+'%':''}</span></div></td>
       <td><div style="display:flex;gap:6px">
         <button class="tab-ab edit" onclick="openEdit('${h.id}')">編輯</button>
@@ -701,7 +746,7 @@ function renderRealized(){
   sec.style.display='';
   document.getElementById('rbody').innerHTML=ST.realized.slice().reverse().map(r=>`
     <tr>
-      <td><span class="mn">${r.symbol}</span> <span style="font-size:10px;color:var(--mu)">${r.market}</span></td>
+      <td><span class="mn">${esc(r.symbol)}</span> <span style="font-size:10px;color:var(--mu)">${r.market}</span></td>
       <td><span class="tag tag-sell">賣出</span></td>
       <td class="r mn">${fmt(r.shares,3)}</td>
       <td class="r mn">${CUR[r.market]} ${fmt(r.price,2)}</td>
@@ -744,7 +789,7 @@ function addHolding(){
   const fxr=parseFloat(document.getElementById('f-fx').value),err=document.getElementById('add-err');
   if(!sym||isNaN(sh)||sh<=0||isNaN(pr)||pr<=0){err.textContent='請填寫代號、股數與買入價格';err.style.display='block';return;}
   const fx=(!isNaN(fxr)&&fxr>0)?fxr:(mkt==='US'?(ST.fx.USD_TWD||32.5):mkt==='JP'?(ST.fx.JPY_TWD||0.217):1);
-  const txRecord={id:Date.now().toString(),shares:sh,price:pr,costTWD:toTWD(pr,mkt)*sh,fx,date:dt,type:'BUY'};
+  const txRecord={id:uid(),shares:sh,price:pr,costTWD:toTWD(pr,mkt)*sh,fx,date:dt,type:'BUY'};
   const ex=ST.holdings.find(h=>h.symbol===sym&&h.market===mkt);
   if(ex){
     const nt=ex.shares+sh;
@@ -754,7 +799,7 @@ function addHolding(){
     if(!ex.txHistory)ex.txHistory=[];
     ex.txHistory.push(txRecord);
   }else{
-    ST.holdings.push({id:Date.now().toString(),market:mkt,symbol:sym,name:nm,shares:sh,avgPrice:pr,costTWD:toTWD(pr,mkt)*sh,buyFx:fx,date:dt,txHistory:[txRecord]});
+    ST.holdings.push({id:uid(),market:mkt,symbol:sym,name:nm,shares:sh,avgPrice:pr,costTWD:toTWD(pr,mkt)*sh,buyFx:fx,date:dt,txHistory:[txRecord]});
   }
   save();closeModal('addModal');renderAll();
   if(ST.gasUrl)fetchQuotes();
@@ -783,9 +828,15 @@ function confirmSell(){
   if(isNaN(sh)||sh<=0||sh>h.shares){err.textContent='賣出股數有誤';err.style.display='block';return;}
   if(isNaN(pr)||pr<=0){err.textContent='請填寫賣出價格';err.style.display='block';return;}
   const cp=(h.costTWD/h.shares)*sh,pnlTWD=toTWD(pr,h.market)*sh-cp;
-  ST.realized.push({symbol:h.symbol,market:h.market,shares:sh,price:pr,date:dt,pnlTWD});
+  ST.realized.push({symbol:h.symbol,market:h.market,shares:sh,price:pr,date:dt,pnlTWD,costTWD:cp,avgCost:h.avgPrice});
   if(sh>=h.shares)ST.holdings=ST.holdings.filter(x=>x.id!==h.id);
-  else{h.shares-=sh;h.costTWD-=cp;}
+  else{
+    h.shares-=sh;h.costTWD-=cp;
+    if(!h.txHistory)h.txHistory=[];
+    h.txHistory.push({id:uid(),shares:sh,price:pr,costTWD:-cp,
+      fx:h.market==='US'?(ST.fx.USD_TWD||null):h.market==='JP'?(ST.fx.JPY_TWD||null):1,
+      date:dt,type:'SELL'});
+  }
   save();closeModal('sellModal');renderAll();
 }
 function openEdit(id){
@@ -817,16 +868,34 @@ function toggleHistory(id){
   const el=document.getElementById('hist-'+id);if(!el)return;
   el.classList.toggle('open');
   const toggle=el.previousElementSibling;
-  if(toggle)toggle.textContent=el.classList.contains('open')?'▴ 收起購買記錄':'▾ 購買記錄（'+el.querySelectorAll('.htx-row').length+' 筆）';
+  if(toggle)toggle.textContent=el.classList.contains('open')?'▴ 收起交易紀錄':'▾ 交易紀錄（'+el.querySelectorAll('.htx-row').length+' 筆）';
 }
 
+// 用每筆買入當時的匯率還原成本；部分賣出時按比例縮放
+function costFromHistory(h){
+  if(!h.txHistory||!h.txHistory.length)return null;
+  const buys=h.txHistory.filter(t=>t.type!=='SELL');
+  if(!buys.length)return null;
+  const shares=buys.reduce((s,t)=>s+(t.shares||0),0);
+  const cost=buys.reduce((s,t)=>s+(t.costTWD||0),0);
+  if(!(shares>0)||!(cost>0))return null;
+  return cost*(h.shares/shares);
+}
 function recalcCosts(){
   if(!ST.holdings.length){alert('尚無持股');return;}
+  const noHist=ST.holdings.filter(h=>h.market!=='TW'&&costFromHistory(h)==null);
+  if(noHist.length&&!confirm(noHist.map(h=>h.symbol).join('、')+' 沒有買入紀錄，只能用「今日匯率」重算，會覆蓋當初的買入匯率。要繼續嗎？'))return;
+  let byHist=0,byFx=0;
   ST.holdings.forEach(h=>{
-    const fx=h.market==='US'?(ST.fx.USD_TWD||32.5):h.market==='JP'?(ST.fx.JPY_TWD||0.217):1;
-    h.costTWD=h.avgPrice*h.shares*fx;h.buyFx=fx;
+    const c=costFromHistory(h);
+    if(c!=null){h.costTWD=c;byHist++;}
+    else{
+      const fx=h.market==='US'?(ST.fx.USD_TWD||32.5):h.market==='JP'?(ST.fx.JPY_TWD||0.217):1;
+      h.costTWD=h.avgPrice*h.shares*fx;h.buyFx=fx;byFx++;
+    }
   });
-  save();renderAll();alert('成本已重新計算完成！');
+  save();renderAll();
+  alert('成本已重算：'+byHist+' 檔依買入紀錄、'+byFx+' 檔依今日匯率。');
 }
 
 // ── 資產歷史快照 ──────────────────────────────────────────────────────
@@ -935,8 +1004,7 @@ function renderChart(){
 
   // 顏色判斷
   const isUp = vals[vals.length-1] >= vals[0];
-  const lineColor = isUp ? '#6ee7b7' : '#f87171';
-  const areaColor = isUp ? 'rgba(110,231,183,0.12)' : 'rgba(248,113,113,0.12)';
+  const lineColor = isUp ? '#1a9e5c' : '#d93025';
 
   // Y 軸標籤（根據數值範圍動態決定小數位數）
   const fmtY = v => {
@@ -967,10 +1035,10 @@ function renderChart(){
 
   // 最後一點標示
   const last = points[points.length-1];
-  const lastLabel = fmtNT(last.d.value);
 
   wrap.innerHTML = `
-    <svg viewBox="0 0 ${W} ${H}" width="100%" style="display:block;">
+    <div class="chart-tip" id="chartTip"><span class="v">${fmtNT(last.d.value)}</span><span class="d">${last.d.date}</span></div>
+    <svg id="chartSvg" viewBox="0 0 ${W} ${H}" width="100%" style="display:block;">
       <defs>
         <linearGradient id="ag" x1="0" y1="0" x2="0" y2="1">
           <stop offset="0%" stop-color="${lineColor}" stop-opacity="0.3"/>
@@ -978,18 +1046,51 @@ function renderChart(){
         </linearGradient>
       </defs>
       <!-- Grid lines -->
-      <line x1="${PL}" y1="${PT}" x2="${W-PR}" y2="${PT}" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>
-      <line x1="${PL}" y1="${(PT+H-PB)/2}" x2="${W-PR}" y2="${(PT+H-PB)/2}" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>
-      <line x1="${PL}" y1="${H-PB}" x2="${W-PR}" y2="${H-PB}" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>
+      <line x1="${PL}" y1="${PT}" x2="${W-PR}" y2="${PT}" stroke="rgba(0,0,0,0.08)" stroke-width="1"/>
+      <line x1="${PL}" y1="${(PT+H-PB)/2}" x2="${W-PR}" y2="${(PT+H-PB)/2}" stroke="rgba(0,0,0,0.08)" stroke-width="1"/>
+      <line x1="${PL}" y1="${H-PB}" x2="${W-PR}" y2="${H-PB}" stroke="rgba(0,0,0,0.08)" stroke-width="1"/>
       <!-- Area -->
       <path d="${areaPath}" fill="url(#ag)"/>
       <!-- Line -->
       <path d="${linePath}" fill="none" stroke="${lineColor}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
       <!-- Last point dot -->
       <circle cx="${last.x}" cy="${last.y}" r="4" fill="${lineColor}"/>
+      <!-- Scrub -->
+      <g id="scrub" style="display:none">
+        <line id="scrubLine" x1="0" y1="${PT}" x2="0" y2="${H-PB}" stroke="rgba(0,0,0,0.25)" stroke-width="1" stroke-dasharray="3 3"/>
+        <circle id="scrubDot" cx="0" cy="0" r="4.5" fill="#fff" stroke="${lineColor}" stroke-width="2.5"/>
+      </g>
       <!-- Labels -->
       ${yLabels}${xLabels}
     </svg>`;
+
+  // 手指／滑鼠拖曳可查看任一天的金額
+  const svg=document.getElementById('chartSvg');
+  const scrub=document.getElementById('scrub');
+  const sLine=document.getElementById('scrubLine');
+  const sDot=document.getElementById('scrubDot');
+  const tip=document.getElementById('chartTip');
+  const resetTip=()=>{
+    scrub.style.display='none';
+    tip.innerHTML=`<span class="v">${fmtNT(last.d.value)}</span><span class="d">${last.d.date}</span>`;
+  };
+  const showAt=clientX=>{
+    const r=svg.getBoundingClientRect();
+    const x=(clientX-r.left)/r.width*W;
+    let bi=0,bd=Infinity;
+    points.forEach((pt,i)=>{const d=Math.abs(pt.x-x);if(d<bd){bd=d;bi=i;}});
+    const pt=points[bi];
+    sLine.setAttribute('x1',pt.x);sLine.setAttribute('x2',pt.x);
+    sDot.setAttribute('cx',pt.x);sDot.setAttribute('cy',pt.y);
+    scrub.style.display='';
+    const diff=pt.d.value-vals[0];
+    tip.innerHTML=`<span class="v">${fmtNT(pt.d.value)}</span><span class="d">${pt.d.date}</span>`+
+      (points.length>1?`<span class="d ${cls(diff)}">${diff>=0?'+':''}${fmtNT(diff)}</span>`:'');
+  };
+  svg.addEventListener('pointerdown',e=>{svg.setPointerCapture(e.pointerId);showAt(e.clientX);});
+  svg.addEventListener('pointermove',e=>{if(e.buttons)showAt(e.clientX);});
+  svg.addEventListener('pointerup',resetTip);
+  svg.addEventListener('pointercancel',resetTip);
 
   // 統計
   const first = vals[0], lastV = vals[vals.length-1];
@@ -1020,7 +1121,11 @@ fetchFX().then(()=>{
       const fx=h.market==='US'?ST.fx.USD_TWD:ST.fx.JPY_TWD;
       const expectedCost=h.avgPrice*h.shares*fx;
       const ratio=h.costTWD/expectedCost;
-      if(ratio<0.5||ratio>2){h.costTWD=expectedCost;h.buyFx=fx;changed=true;}
+      if(ratio>=0.5&&ratio<=2)return;        // 看起來正常就別動它
+      const hist=costFromHistory(h);         // 有買入紀錄就用當初匯率還原，不要用今天的匯率蓋掉
+      h.costTWD=hist!=null?hist:expectedCost;
+      if(hist==null)h.buyFx=fx;
+      changed=true;
     });
     if(changed)save();
   }
